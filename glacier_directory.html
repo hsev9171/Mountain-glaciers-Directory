@@ -1,0 +1,3049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mountain Glacier Directory — Dr. Heïdi Sevestre</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&family=Open+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <style>
+    /* ── BRAND TOKENS ─────────────────────────────────────────── */
+    :root {
+      --gold:       #C9A84C;
+      --gold-light: #E8D08A;
+      --gold-pale:  #F5EDD6;
+      --dark:       #1A1A1A;
+      --charcoal:   #333333;
+      --body:       #555555;
+      --muted:      #888888;
+      --white:      #FFFFFF;
+      --bg-light:   #F9F8F5;
+      --border:     #E5E0D5;
+      --shadow:     0 2px 12px rgba(0,0,0,0.07);
+      --shadow-hover: 0 6px 24px rgba(0,0,0,0.12);
+      --radius:     4px;
+
+      /* category colours */
+      --c-org:   #2C3440;
+      --c-whs:   #C9A84C;
+      --c-bio:   #6B8F71;
+      --c-art:   #7B5C8A;
+      --c-film:  #8A4040;
+    }
+
+    /* ── RESET & BASE ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Open Sans', sans-serif;
+      font-size: 15px;
+      color: var(--body);
+      background: var(--white);
+      line-height: 1.65;
+    }
+    a { color: inherit; text-decoration: none; }
+    a:hover { color: var(--gold); }
+
+    /* ── HEADER ───────────────────────────────────────────────── */
+    .site-header {
+      position: sticky; top: 0; z-index: 1000;
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 0 40px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 64px;
+    }
+    .site-logo {
+      display: flex; align-items: center; gap: 10px;
+      font-family: 'Raleway', sans-serif;
+      font-weight: 700; font-size: 15px;
+      color: var(--dark); letter-spacing: 0.02em;
+    }
+    .site-logo svg { width: 28px; height: 28px; }
+    .site-nav {
+      display: flex; align-items: center; gap: 28px;
+      font-family: 'Raleway', sans-serif; font-size: 13px;
+      font-weight: 600; letter-spacing: 0.04em;
+      color: var(--charcoal);
+    }
+    .site-nav a:hover { color: var(--gold); }
+    .btn-contact {
+      border: 1.5px solid var(--dark); border-radius: 2px;
+      padding: 7px 18px; font-family: 'Raleway', sans-serif;
+      font-size: 12px; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--dark);
+      transition: all 0.2s;
+    }
+    .btn-contact:hover { background: var(--dark); color: var(--white); }
+
+    /* ── HERO ─────────────────────────────────────────────────── */
+    .hero {
+      background: var(--white);
+      padding: 64px 40px 48px;
+      max-width: 880px; margin: 0 auto;
+      text-align: center;
+    }
+    .hero h1 {
+      font-family: 'Raleway', sans-serif;
+      font-weight: 800; font-size: clamp(32px, 5vw, 52px);
+      color: var(--dark); letter-spacing: -0.01em;
+      line-height: 1.15; margin-bottom: 16px;
+    }
+    .gold-rule {
+      width: 80px; height: 3px;
+      background: var(--gold);
+      margin: 0 auto 24px;
+      border: none;
+    }
+    .hero p {
+      font-size: 16px; color: var(--body);
+      max-width: 640px; margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* ── CATEGORY TABS ────────────────────────────────────────── */
+    .cat-tabs-wrap {
+      background: var(--bg-light);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 0 40px;
+      overflow-x: auto;
+    }
+    .cat-tabs {
+      display: flex; align-items: stretch;
+      gap: 0; max-width: 1200px; margin: 0 auto;
+      white-space: nowrap;
+    }
+    .cat-tab {
+      padding: 16px 22px;
+      font-family: 'Raleway', sans-serif;
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--muted); border-bottom: 3px solid transparent;
+      cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; gap: 8px;
+      background: none; border-top: none; border-left: none; border-right: none;
+    }
+    .cat-tab:hover { color: var(--dark); }
+    .cat-tab.active {
+      color: var(--dark);
+      border-bottom-color: var(--gold);
+    }
+    .cat-tab .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .cat-count {
+      background: var(--border);
+      color: var(--muted);
+      border-radius: 20px;
+      padding: 1px 7px; font-size: 11px;
+      font-weight: 600;
+    }
+    .cat-tab.active .cat-count {
+      background: var(--gold-pale);
+      color: var(--gold);
+    }
+
+    /* ── MAP ──────────────────────────────────────────────────── */
+    .map-section {
+      border-bottom: 1px solid var(--border);
+    }
+    #map {
+      height: 420px; width: 100%;
+    }
+
+    /* Leaflet popup custom */
+    .leaflet-popup-content-wrapper {
+      border-radius: var(--radius) !important;
+      box-shadow: var(--shadow-hover) !important;
+      border: 1px solid var(--border);
+    }
+    .leaflet-popup-content {
+      margin: 14px 16px !important;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 13px; line-height: 1.5;
+    }
+    .popup-name {
+      font-family: 'Raleway', sans-serif;
+      font-weight: 700; font-size: 14px;
+      color: var(--dark); margin-bottom: 4px;
+    }
+    .popup-type {
+      font-size: 11px; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+    .popup-focus {
+      color: var(--body); margin-bottom: 8px;
+    }
+    .popup-link {
+      color: var(--gold); font-weight: 600;
+      font-size: 12px; letter-spacing: 0.03em;
+    }
+    .popup-link:hover { text-decoration: underline; }
+
+    /* ── FILTERS ──────────────────────────────────────────────── */
+    .filters-bar {
+      padding: 20px 40px;
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 16px;
+      flex-wrap: wrap;
+    }
+    .search-wrap {
+      position: relative; flex: 1; min-width: 220px;
+    }
+    .search-wrap svg {
+      position: absolute; left: 12px; top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+    }
+    #search-input {
+      width: 100%; padding: 9px 12px 9px 36px;
+      border: 1.5px solid var(--border); border-radius: var(--radius);
+      font-family: 'Open Sans', sans-serif; font-size: 14px;
+      color: var(--dark); background: var(--white);
+      transition: border-color 0.2s;
+    }
+    #search-input:focus {
+      outline: none; border-color: var(--gold);
+    }
+    #search-input::placeholder { color: var(--muted); }
+
+    .filter-chips {
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .chip {
+      padding: 6px 14px;
+      border: 1.5px solid var(--border); border-radius: 20px;
+      font-family: 'Raleway', sans-serif;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      color: var(--muted); cursor: pointer;
+      transition: all 0.2s; background: var(--white);
+    }
+    .chip:hover { border-color: var(--gold); color: var(--gold); }
+    .chip.active {
+      border-color: var(--gold); background: var(--gold);
+      color: var(--white);
+    }
+
+    /* ── RESULTS COUNT ────────────────────────────────────────── */
+    .results-meta {
+      padding: 16px 40px 0;
+      font-size: 13px; color: var(--muted);
+      font-family: 'Raleway', sans-serif; letter-spacing: 0.02em;
+    }
+    .results-meta span { color: var(--dark); font-weight: 700; }
+
+    /* ── CARD GRID ────────────────────────────────────────────── */
+    .cards-section {
+      padding: 20px 40px 60px;
+      max-width: 1400px; margin: 0 auto;
+    }
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      transition: all 0.2s;
+      display: flex; flex-direction: column;
+      position: relative; overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 3px; background: transparent;
+      transition: background 0.2s;
+    }
+    .card:hover {
+      box-shadow: var(--shadow-hover);
+      border-color: #ccc;
+    }
+    .card:hover::before { background: var(--gold); }
+
+    .card-header {
+      display: flex; align-items: flex-start;
+      justify-content: space-between; gap: 12px;
+      margin-bottom: 10px;
+    }
+    .card-name {
+      font-family: 'Raleway', sans-serif;
+      font-weight: 700; font-size: 14px;
+      color: var(--dark); line-height: 1.3;
+      flex: 1;
+    }
+    .card-cat-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      flex-shrink: 0; margin-top: 3px;
+    }
+    .card-type {
+      font-size: 11px; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 6px;
+      font-family: 'Raleway', sans-serif; font-weight: 600;
+    }
+    .card-focus {
+      font-size: 13px; color: var(--body);
+      line-height: 1.55; flex: 1;
+      margin-bottom: 12px;
+    }
+    .card-footer {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      margin-top: auto; padding-top: 12px;
+      border-top: 1px solid var(--border);
+      gap: 8px;
+    }
+    .card-region {
+      font-size: 11px; color: var(--muted);
+      font-family: 'Raleway', sans-serif;
+      font-weight: 600; letter-spacing: 0.03em;
+    }
+    .card-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: 'Raleway', sans-serif;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      color: var(--body); transition: color 0.2s;
+    }
+    .card-link:hover { color: var(--gold); }
+    .card-link svg { transition: transform 0.2s; }
+    .card-link:hover svg { transform: translateX(2px); }
+
+    .no-results {
+      text-align: center; padding: 60px 20px;
+      color: var(--muted);
+      font-family: 'Raleway', sans-serif; font-size: 16px;
+      grid-column: 1/-1;
+    }
+
+    /* ── LEGEND ───────────────────────────────────────────────── */
+    .legend-bar {
+      padding: 12px 40px;
+      background: var(--bg-light);
+      border-bottom: 1px solid var(--border);
+      display: flex; flex-wrap: wrap; gap: 20px;
+      align-items: center;
+    }
+    .legend-label {
+      font-family: 'Raleway', sans-serif; font-size: 11px;
+      font-weight: 700; letter-spacing: 0.04em;
+      color: var(--muted); text-transform: uppercase;
+      margin-right: 4px;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 6px;
+      font-family: 'Open Sans', sans-serif; font-size: 12px;
+      color: var(--charcoal);
+    }
+    .legend-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+    }
+
+    /* ── SUBMISSION FORM ──────────────────────────────────────── */
+    .submit-section {
+      background: var(--bg-light);
+      border-top: 1px solid var(--border);
+      padding: 64px 40px;
+    }
+    .submit-inner {
+      max-width: 640px; margin: 0 auto; text-align: center;
+    }
+    .submit-inner h2 {
+      font-family: 'Raleway', sans-serif;
+      font-weight: 800; font-size: 28px;
+      color: var(--dark); margin-bottom: 12px;
+    }
+    .submit-inner .gold-rule { margin: 12px auto 20px; width: 60px; }
+    .submit-inner p {
+      color: var(--body); font-size: 14px;
+      margin-bottom: 32px; line-height: 1.6;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px; margin-bottom: 14px;
+    }
+    .form-field {
+      display: flex; flex-direction: column;
+      gap: 5px; text-align: left;
+    }
+    .form-field.full { grid-column: 1/-1; }
+    .form-field label {
+      font-family: 'Raleway', sans-serif;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--charcoal);
+    }
+    .form-field input,
+    .form-field select,
+    .form-field textarea {
+      padding: 9px 12px;
+      border: 1.5px solid var(--border); border-radius: var(--radius);
+      font-family: 'Open Sans', sans-serif; font-size: 14px;
+      color: var(--dark); background: var(--white);
+      transition: border-color 0.2s;
+      resize: vertical;
+    }
+    .form-field input:focus,
+    .form-field select:focus,
+    .form-field textarea:focus {
+      outline: none; border-color: var(--gold);
+    }
+    .btn-submit {
+      display: inline-flex; align-items: center; gap: 10px;
+      margin-top: 8px;
+      font-family: 'Raleway', sans-serif;
+      font-size: 12px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--dark); background: none;
+      border: none; cursor: pointer;
+      padding: 10px 0; transition: color 0.2s;
+    }
+    .btn-submit:hover { color: var(--gold); }
+    .btn-arrow {
+      width: 32px; height: 32px; border-radius: 50%;
+      border: 1.5px solid currentColor;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .btn-submit:hover .btn-arrow {
+      background: var(--gold); border-color: var(--gold);
+      color: var(--white);
+    }
+    .form-success {
+      display: none;
+      background: var(--gold-pale);
+      border: 1px solid var(--gold);
+      border-radius: var(--radius);
+      padding: 16px; text-align: center;
+      font-family: 'Raleway', sans-serif;
+      font-size: 14px; color: var(--dark);
+      margin-top: 16px;
+    }
+
+    /* ── FOOTER ───────────────────────────────────────────────── */
+    .site-footer {
+      background: #EDE8DC;
+      padding: 32px 40px;
+      text-align: center;
+      font-family: 'Raleway', sans-serif;
+      font-size: 12px; color: var(--body);
+      letter-spacing: 0.03em;
+    }
+    .site-footer a { color: var(--gold); }
+
+    /* ── RESPONSIVE ───────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .site-header { padding: 0 20px; }
+      .site-nav { display: none; }
+      .hero { padding: 40px 20px 32px; }
+      .cat-tabs-wrap { padding: 0 20px; }
+      .filters-bar { padding: 16px 20px; }
+      .legend-bar { padding: 12px 20px; }
+      .cards-section { padding: 16px 20px 40px; }
+      .cards-grid { grid-template-columns: 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+      .submit-section { padding: 40px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="site-header">
+  <a href="https://www.heidisevestre.com" class="site-logo">
+    <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="14,3 26,24 2,24" fill="none" stroke="#C9A84C" stroke-width="2.2" stroke-linejoin="round"/>
+      <polygon points="14,10 20,24 8,24" fill="#C9A84C" opacity="0.35"/>
+    </svg>
+    Heïdi Sevestre
+  </a>
+  <nav class="site-nav">
+    <a href="https://www.heidisevestre.com">Home</a>
+    <a href="https://www.heidisevestre.com/expeditions">Expeditions</a>
+    <a href="https://www.heidisevestre.com/about">About</a>
+    <a href="https://www.heidisevestre.com/impact">Impact</a>
+    <a href="https://www.heidisevestre.com/contact" class="btn-contact">Contact</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <h1>Mountain Glacier Directory</h1>
+  <hr class="gold-rule">
+  <p>A living inventory of the researchers, organisations, UNESCO sites, artists and filmmakers working on mountain glaciers worldwide. Use the map and filters to explore — and submit a missing entry below.</p>
+</section>
+
+<!-- CATEGORY TABS -->
+<div class="cat-tabs-wrap">
+  <div class="cat-tabs" id="cat-tabs">
+    <button class="cat-tab active" data-cat="All">
+      All <span class="cat-count" id="count-all">187</span>
+    </button>
+    <button class="cat-tab" data-cat="Organisation">
+      <span class="dot" style="background:var(--c-org)"></span>
+      Organisations <span class="cat-count" id="count-org">110</span>
+    </button>
+    <button class="cat-tab" data-cat="UNESCO World Heritage">
+      <span class="dot" style="background:var(--c-whs)"></span>
+      UNESCO Heritage <span class="cat-count" id="count-whs">43</span>
+    </button>
+    <button class="cat-tab" data-cat="UNESCO Biosphere Reserve">
+      <span class="dot" style="background:var(--c-bio)"></span>
+      Biosphere Reserves <span class="cat-count" id="count-bio">14</span>
+    </button>
+    <button class="cat-tab" data-cat="Artist/Art">
+      <span class="dot" style="background:var(--c-art)"></span>
+      Artists & Art <span class="cat-count" id="count-art">11</span>
+    </button>
+    <button class="cat-tab" data-cat="Film/Documentary">
+      <span class="dot" style="background:var(--c-film)"></span>
+      Films <span class="cat-count" id="count-film">9</span>
+    </button>
+  </div>
+</div>
+
+<!-- MAP -->
+<div class="map-section">
+  <div id="map"></div>
+</div>
+
+<!-- LEGEND -->
+<div class="legend-bar">
+  <span class="legend-label">Map key</span>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--c-org)"></span> Organisation</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--c-whs)"></span> UNESCO World Heritage</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--c-bio)"></span> Biosphere Reserve</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--c-art)"></span> Artist / Art</div>
+  <div class="legend-item"><span class="legend-dot" style="background:var(--c-film)"></span> Film / Documentary</div>
+</div>
+
+<!-- FILTERS -->
+<div class="filters-bar">
+  <div class="search-wrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+    <input type="text" id="search-input" placeholder="Search by name, country, focus…">
+  </div>
+  <div class="filter-chips" id="region-chips"></div>
+</div>
+
+<!-- RESULTS META -->
+<div class="results-meta">
+  Showing <span id="results-count">0</span> entries
+</div>
+
+<!-- CARDS -->
+<div class="cards-section">
+  <div class="cards-grid" id="cards-grid"></div>
+</div>
+
+<!-- SUBMISSION FORM -->
+<section class="submit-section" id="submit">
+  <div class="submit-inner">
+    <h2>Something missing?</h2>
+    <hr class="gold-rule">
+    <p>This directory is a living resource. If you know of an organisation, site, artist or project working on mountain glaciers that isn't listed here, please tell us — we review all submissions.</p>
+    <form id="submit-form">
+      <div class="form-row">
+        <div class="form-field">
+          <label>Category *</label>
+          <select name="category" required>
+            <option value="">Select…</option>
+            <option>Organisation</option>
+            <option>UNESCO World Heritage</option>
+            <option>UNESCO Biosphere Reserve</option>
+            <option>Artist / Art project</option>
+            <option>Film / Documentary</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Name *</label>
+          <input type="text" name="name" required placeholder="Full name">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Country / Base</label>
+          <input type="text" name="country" placeholder="e.g. Switzerland">
+        </div>
+        <div class="form-field">
+          <label>Region</label>
+          <input type="text" name="region" placeholder="e.g. European Alps">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field full">
+          <label>Website</label>
+          <input type="url" name="website" placeholder="https://…">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field full">
+          <label>Focus — one line *</label>
+          <input type="text" name="focus" required placeholder="What do they do?">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field full">
+          <label>Why should this be included?</label>
+          <textarea name="reason" rows="3" placeholder="Any context, links or personal connections…"></textarea>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Your name</label>
+          <input type="text" name="submitter_name" placeholder="Optional">
+        </div>
+        <div class="form-field">
+          <label>Your email</label>
+          <input type="email" name="submitter_email" placeholder="Optional">
+        </div>
+      </div>
+      <button type="submit" class="btn-submit">
+        Submit entry
+        <span class="btn-arrow">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </span>
+      </button>
+    </form>
+    <div class="form-success" id="form-success">
+      ✓ Thank you! Your submission has been noted and will be reviewed.
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <p>Mountain Glacier Directory · <a href="https://www.heidisevestre.com">heidisevestre.com</a> · Updated April 2026</p>
+  <p style="margin-top:6px;font-size:11px;color:#999;">A living resource — submit missing entries above. Data compiled with AI assistance; verify individual entries before citing.</p>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const DATA = [
+  {
+    "category": "Organisation",
+    "name": "World Glacier Monitoring Service (WGMS)",
+    "type": "Intergovernmental",
+    "region": "Global",
+    "country": "Zurich, Switzerland",
+    "focus": "Global glacier mass balance & length change database; operates under ICSU/IUGG/UNEP/UNESCO/WMO",
+    "website": "https://wgms.ch",
+    "notes": "The global reference dataset for glacier change.",
+    "lat": 47.3769,
+    "lon": 8.5417
+  },
+  {
+    "category": "Organisation",
+    "name": "GLIMS (Global Land Ice Measurements from Space)",
+    "type": "Intergovernmental",
+    "region": "Global",
+    "country": "USA / international",
+    "focus": "Satellite-based inventory of world's glaciers, hosted at NSIDC",
+    "website": "https://www.glims.org",
+    "notes": "The global glacier outline database.",
+    "lat": 40.015,
+    "lon": -105.2705
+  },
+  {
+    "category": "Organisation",
+    "name": "IACS — International Association of Cryospheric Sciences",
+    "type": "Intergovernmental",
+    "region": "Global",
+    "country": "International (IUGG)",
+    "focus": "Scientific union for cryospheric research; coordinates WGs on glaciers",
+    "website": "https://cryosphericsciences.org",
+    "notes": "Part of IUGG.",
+    "lat": 47.3769,
+    "lon": 8.5417
+  },
+  {
+    "category": "Organisation",
+    "name": "UNESCO — IYGP 2025 / Decade of Cryospheric Sciences",
+    "type": "Intergovernmental",
+    "region": "Global",
+    "country": "Paris, France",
+    "focus": "UN-led science & policy framework for glaciers and the cryosphere",
+    "website": "https://www.un-cryosphere.org/en",
+    "notes": "IYGP 2025 launched the Decade 2025–2034.",
+    "lat": 48.8497,
+    "lon": 2.3064
+  },
+  {
+    "category": "Organisation",
+    "name": "WMO Global Cryosphere Watch",
+    "type": "Intergovernmental",
+    "region": "Global",
+    "country": "Geneva, Switzerland",
+    "focus": "Authoritative cryosphere observations for weather, climate, water services",
+    "website": "https://globalcryospherewatch.org",
+    "notes": "WMO coordinating mechanism.",
+    "lat": 46.2266,
+    "lon": 6.1407
+  },
+  {
+    "category": "Organisation",
+    "name": "IPCC — Working Group I & II (cryosphere chapters)",
+    "type": "Intergovernmental",
+    "region": "Global",
+    "country": "Geneva, Switzerland",
+    "focus": "Scientific assessment of cryosphere & climate",
+    "website": "https://www.ipcc.ch",
+    "notes": "SROCC 2019 is the cornerstone assessment.",
+    "lat": 46.2266,
+    "lon": 6.1407
+  },
+  {
+    "category": "Organisation",
+    "name": "GRID-Arendal",
+    "type": "Intergovernmental",
+    "region": "Global / Polar & mountain",
+    "country": "Arendal, Norway",
+    "focus": "UNEP-affiliated science-policy communication on cryosphere & environment",
+    "website": "https://www.grida.no",
+    "notes": "Key partner for glacier communication.",
+    "lat": 58.4611,
+    "lon": 8.7724
+  },
+  {
+    "category": "Organisation",
+    "name": "ICCI — International Cryosphere Climate Initiative",
+    "type": "NGO",
+    "region": "Global",
+    "country": "USA / international",
+    "focus": "Science-policy advocacy; State of the Cryosphere reports; Ambition on Melting Ice at COPs",
+    "website": "https://iccinet.org",
+    "notes": "Major advocacy voice at UNFCCC.",
+    "lat": 44.9778,
+    "lon": -93.265
+  },
+  {
+    "category": "Organisation",
+    "name": "Cryosphere 1.5°C Initiative",
+    "type": "NGO",
+    "region": "Global",
+    "country": "International",
+    "focus": "Coalition pushing for 1.5°C as a cryosphere survival threshold",
+    "website": "https://iccinet.org/cryosphere-1-5/",
+    "notes": "Operated via ICCI and partners.",
+    "lat": 44.9778,
+    "lon": -93.265
+  },
+  {
+    "category": "Organisation",
+    "name": "Protect Our Winters (POW)",
+    "type": "NGO",
+    "region": "Global — alpine focus",
+    "country": "USA + EU chapters",
+    "focus": "Outdoor-community climate advocacy with strong glacier/snow focus",
+    "website": "https://protectourwinters.org",
+    "notes": "Founded by Jeremy Jones.",
+    "lat": 39.7392,
+    "lon": -104.9903
+  },
+  {
+    "category": "Organisation",
+    "name": "Glacier Snowbank",
+    "type": "NGO",
+    "region": "Global",
+    "country": "Founded by Carol Devine (Canada)",
+    "focus": "Collective memory project — people write messages, memories & promises to glaciers",
+    "website": "https://www.glaciersnowbank.org",
+    "notes": "Voices from Inuit culturalists, glaciologists & writers worldwide.",
+    "lat": 45.4215,
+    "lon": -75.6972
+  },
+  {
+    "category": "Organisation",
+    "name": "GlacierWatch",
+    "type": "NGO",
+    "region": "Global — Europe focus",
+    "country": "Europe",
+    "focus": "Citizen-science & advocacy network on glaciers; UNESCO Task Force 1 partner",
+    "website": "https://glacierwatch.eu",
+    "notes": "Works alongside Glacier Nation, POW Europe, Mountain Wilderness, Ice Memory.",
+    "lat": 48.8566,
+    "lon": 2.3522
+  },
+  {
+    "category": "Organisation",
+    "name": "Glacier Nation",
+    "type": "NGO",
+    "region": "Global",
+    "country": "International",
+    "focus": "Advocacy coalition for glacier protection; UNESCO Task Force 1 partner",
+    "website": "",
+    "notes": "Verify URL. Sister to GlacierWatch.",
+    "lat": 48.8566,
+    "lon": 2.3522
+  },
+  {
+    "category": "Organisation",
+    "name": "China Water Risk (CWR)",
+    "type": "NGO",
+    "region": "Hindu Kush Himalaya / Global",
+    "country": "Hong Kong, China",
+    "focus": "Non-profit on climate & water risk; Stop the Melt factsheets; Himalayan Water Towers advocacy",
+    "website": "https://cwrrr.org",
+    "notes": "Influential on Asian finance & cryosphere risk.",
+    "lat": 22.3193,
+    "lon": 114.1694
+  },
+  {
+    "category": "Organisation",
+    "name": "Global Glacier Casualty List (GGCL)",
+    "type": "Research",
+    "region": "Global",
+    "country": "Rice University, Houston, USA + Iceland",
+    "focus": "Platform tracking extinct & critically endangered glaciers, with stories from glacier communities",
+    "website": "https://glaciercasualtylist.rice.edu",
+    "notes": "Rice + U. of Iceland + Iceland Glaciological Society + WGMS + UNESCO. Cymene Howe & Dominic Boyer.",
+    "lat": 29.7174,
+    "lon": -95.4018
+  },
+  {
+    "category": "Organisation",
+    "name": "IDEAM — Instituto de Hidrología, Meteorología y Estudios Ambientales",
+    "type": "Government",
+    "region": "Tropical Andes",
+    "country": "Bogotá, Colombia",
+    "focus": "Monitors Colombia's remaining glaciers; national cryosphere authority",
+    "website": "http://www.ideam.gov.co",
+    "notes": "Colombia's glacier monitoring programme.",
+    "lat": 4.711,
+    "lon": -74.0721
+  },
+  {
+    "category": "Organisation",
+    "name": "Cumbres Blancas",
+    "type": "NGO",
+    "region": "Tropical Andes",
+    "country": "Colombia",
+    "focus": "Citizen-led initiative on Colombian glaciers & mountain ecosystems",
+    "website": "https://cumbresblancas.org",
+    "notes": "Community-rooted glacier protection.",
+    "lat": 4.5339,
+    "lon": -75.6811
+  },
+  {
+    "category": "Organisation",
+    "name": "INAIGEM — Instituto Nacional de Investigación en Glaciares y Ecosistemas de Montaña",
+    "type": "Government",
+    "region": "Tropical Andes",
+    "country": "Huaraz, Peru",
+    "focus": "Peru's national glacier & mountain research institute",
+    "website": "https://www.gob.pe/inaigem",
+    "notes": "A full state agency dedicated to glaciers.",
+    "lat": -9.5278,
+    "lon": -77.5278
+  },
+  {
+    "category": "Organisation",
+    "name": "ANA — Autoridad Nacional del Agua (Unidad de Glaciología)",
+    "type": "Government",
+    "region": "Tropical Andes",
+    "country": "Lima, Peru",
+    "focus": "National water authority with glaciological unit & GLOF monitoring",
+    "website": "https://www.gob.pe/ana",
+    "notes": "Runs Cordillera Blanca GLOF early warning.",
+    "lat": -12.0464,
+    "lon": -77.0428
+  },
+  {
+    "category": "Organisation",
+    "name": "IRD — Institut de Recherche pour le Développement (Andean programme)",
+    "type": "Research",
+    "region": "Tropical Andes",
+    "country": "France / Andean field stations",
+    "focus": "Long-term glacier monitoring in Peru, Bolivia, Ecuador (GLACIOCLIM-Andes)",
+    "website": "https://en.ird.fr",
+    "notes": "Historic operator of Zongo & Antizana glaciers.",
+    "lat": -16.2833,
+    "lon": -68.1333
+  },
+  {
+    "category": "Organisation",
+    "name": "INGEMMET — Observatorio Glaciar del Perú",
+    "type": "Government",
+    "region": "Tropical Andes",
+    "country": "Peru",
+    "focus": "Geological & glacier hazard monitoring",
+    "website": "https://www.gob.pe/ingemmet",
+    "notes": "Glacier-lake hazards.",
+    "lat": -12.0464,
+    "lon": -77.0428
+  },
+  {
+    "category": "Organisation",
+    "name": "IANIGLA — Instituto Argentino de Nivología, Glaciología y Ciencias Ambientales",
+    "type": "Research",
+    "region": "Southern Andes",
+    "country": "Mendoza, Argentina",
+    "focus": "Argentina's national glaciology institute; runs the national glacier inventory",
+    "website": "https://www.mendoza.conicet.gob.ar/ianigla/",
+    "notes": "Home of Argentina's Glacier Law inventory.",
+    "lat": -32.8908,
+    "lon": -68.8272
+  },
+  {
+    "category": "Organisation",
+    "name": "CECs — Centro de Estudios Científicos",
+    "type": "Research",
+    "region": "Southern Andes / Patagonia",
+    "country": "Valdivia, Chile",
+    "focus": "Glaciology group; Patagonian icefields research",
+    "website": "https://www.cecs.cl",
+    "notes": "Key Patagonia science hub.",
+    "lat": -39.8142,
+    "lon": -73.2459
+  },
+  {
+    "category": "Organisation",
+    "name": "DGA — Dirección General de Aguas, Unidad de Glaciología y Nieves",
+    "type": "Government",
+    "region": "Southern Andes",
+    "country": "Santiago, Chile",
+    "focus": "Chile's national glacier inventory & monitoring",
+    "website": "https://dga.mop.gob.cl",
+    "notes": "Operates Chilean glacier inventory.",
+    "lat": -33.4489,
+    "lon": -70.6693
+  },
+  {
+    "category": "Organisation",
+    "name": "Fundación Glaciares Chilenos",
+    "type": "NGO",
+    "region": "Southern Andes",
+    "country": "Chile",
+    "focus": "Advocacy for a Chilean glacier protection law",
+    "website": "https://www.glaciareschilenos.org",
+    "notes": "Campaigning arm for glacier legislation.",
+    "lat": -33.4489,
+    "lon": -70.6693
+  },
+  {
+    "category": "Organisation",
+    "name": "GlacierMap (University of Plymouth)",
+    "type": "Citizen Science",
+    "region": "Tropical Andes",
+    "country": "Plymouth, UK / Peru",
+    "focus": "Citizen-science tool for mapping Peruvian Andean glacier change from satellite imagery",
+    "website": "https://www.plymouth.ac.uk",
+    "notes": "Led by Caroline Clason & Sally Rangecroft.",
+    "lat": -9.5278,
+    "lon": -77.5278
+  },
+  {
+    "category": "Organisation",
+    "name": "ICIMOD — International Centre for Integrated Mountain Development",
+    "type": "Intergovernmental",
+    "region": "Hindu Kush Himalaya",
+    "country": "Kathmandu, Nepal",
+    "focus": "Regional intergovernmental body for the HKH; cryosphere, water, livelihoods",
+    "website": "https://www.icimod.org",
+    "notes": "8 HKH member countries. Flagship HKH Assessment.",
+    "lat": 27.7172,
+    "lon": 85.324
+  },
+  {
+    "category": "Organisation",
+    "name": "ITP-CAS — Institute of Tibetan Plateau Research, Chinese Academy of Sciences",
+    "type": "Research",
+    "region": "Tibetan Plateau / HKH",
+    "country": "Beijing, China",
+    "focus": "Largest cryosphere research body on the Tibetan Plateau",
+    "website": "http://english.itpcas.cas.cn",
+    "notes": "Yao Tandong's institute.",
+    "lat": 39.9042,
+    "lon": 116.4074
+  },
+  {
+    "category": "Organisation",
+    "name": "NIH — National Institute of Hydrology (India)",
+    "type": "Government",
+    "region": "Himalaya",
+    "country": "Roorkee, India",
+    "focus": "Himalayan glaciology & hydrology",
+    "website": "https://nihroorkee.gov.in",
+    "notes": "Government of India research body.",
+    "lat": 29.8543,
+    "lon": 77.888
+  },
+  {
+    "category": "Organisation",
+    "name": "WIHG — Wadia Institute of Himalayan Geology",
+    "type": "Research",
+    "region": "Himalaya",
+    "country": "Dehradun, India",
+    "focus": "Indian flagship for Himalayan glaciology & geology",
+    "website": "https://www.wihg.res.in",
+    "notes": "DST-supported, Indian government.",
+    "lat": 30.3165,
+    "lon": 78.0322
+  },
+  {
+    "category": "Organisation",
+    "name": "Indian Institute of Science — Divecha Centre for Climate Change",
+    "type": "Research",
+    "region": "Himalaya",
+    "country": "Bangalore, India",
+    "focus": "Cryosphere & climate research in the Himalaya",
+    "website": "https://dccc.iisc.ac.in",
+    "notes": "Anil Kulkarni's group.",
+    "lat": 13.0219,
+    "lon": 77.5671
+  },
+  {
+    "category": "Organisation",
+    "name": "Kathmandu University — Himalayan Cryosphere, Climate & Disaster Research Centre",
+    "type": "Research",
+    "region": "Himalaya",
+    "country": "Dhulikhel, Nepal",
+    "focus": "Nepali-led glaciological research & education",
+    "website": "https://ku.edu.np",
+    "notes": "Partner of ICIMOD.",
+    "lat": 27.6189,
+    "lon": 85.5386
+  },
+  {
+    "category": "Organisation",
+    "name": "Nepal Academy of Science & Technology (NAST)",
+    "type": "Government",
+    "region": "Himalaya",
+    "country": "Kathmandu, Nepal",
+    "focus": "National science body with glacier research programmes",
+    "website": "https://nast.gov.np",
+    "notes": "",
+    "lat": 27.6789,
+    "lon": 85.3494
+  },
+  {
+    "category": "Organisation",
+    "name": "Pakistan Meteorological Department — GLOF programme",
+    "type": "Government",
+    "region": "Karakoram / HKH",
+    "country": "Islamabad, Pakistan",
+    "focus": "GLOF early warning; works with UNDP GLOF-II",
+    "website": "http://www.pmd.gov.pk",
+    "notes": "GLOF-II project covers ~3,000 glacial lakes.",
+    "lat": 33.6844,
+    "lon": 73.0479
+  },
+  {
+    "category": "Organisation",
+    "name": "Karakoram International University — Glacier Research Cell",
+    "type": "Research",
+    "region": "Karakoram",
+    "country": "Gilgit, Pakistan",
+    "focus": "Local Karakoram glacier research",
+    "website": "https://www.kiu.edu.pk",
+    "notes": "Verify current programme name.",
+    "lat": 35.9208,
+    "lon": 74.308
+  },
+  {
+    "category": "Organisation",
+    "name": "Bhutan — National Center for Hydrology & Meteorology",
+    "type": "Government",
+    "region": "Eastern Himalaya",
+    "country": "Thimphu, Bhutan",
+    "focus": "Glacier & GLOF monitoring in Bhutan",
+    "website": "https://www.nchm.gov.bt",
+    "notes": "Active GLOF early-warning work.",
+    "lat": 27.4728,
+    "lon": 89.639
+  },
+  {
+    "category": "Organisation",
+    "name": "WSL / SLF — Swiss Federal Institute for Forest, Snow & Landscape Research",
+    "type": "Research",
+    "region": "European Alps",
+    "country": "Davos & Birmensdorf, Switzerland",
+    "focus": "Snow, avalanche, permafrost & glacier research",
+    "website": "https://www.slf.ch",
+    "notes": "Permafrost and snow powerhouse.",
+    "lat": 46.8131,
+    "lon": 9.8486
+  },
+  {
+    "category": "Organisation",
+    "name": "ETH Zürich — Glaciology group (VAW)",
+    "type": "Research",
+    "region": "European Alps / Global",
+    "country": "Zürich, Switzerland",
+    "focus": "Numerical glaciology, mass balance, hazards",
+    "website": "https://vaw.ethz.ch",
+    "notes": "World-leading group (Farinotti, Bauder, Vieli).",
+    "lat": 47.3769,
+    "lon": 8.5417
+  },
+  {
+    "category": "Organisation",
+    "name": "University of Zürich — Dept of Geography (Glaciology & Geomorphodynamics)",
+    "type": "Research",
+    "region": "European Alps / Global",
+    "country": "Zürich, Switzerland",
+    "focus": "Remote sensing of glaciers; hosts WGMS",
+    "website": "https://www.geo.uzh.ch",
+    "notes": "Hosts WGMS.",
+    "lat": 47.3957,
+    "lon": 8.551
+  },
+  {
+    "category": "Organisation",
+    "name": "University of Fribourg — Cryosphere group",
+    "type": "Research",
+    "region": "European Alps",
+    "country": "Fribourg, Switzerland",
+    "focus": "Glacier dynamics, debris-covered glaciers",
+    "website": "https://www.unifr.ch",
+    "notes": "M. Huss's group.",
+    "lat": 46.802,
+    "lon": 7.1517
+  },
+  {
+    "category": "Organisation",
+    "name": "University of Grenoble Alpes / IGE",
+    "type": "Research",
+    "region": "European Alps / Global",
+    "country": "Grenoble, France",
+    "focus": "Coordinates GLACIOCLIM observatory; Alps, Andes, Himalaya",
+    "website": "https://www.ige-grenoble.fr",
+    "notes": "French flagship cryosphere lab.",
+    "lat": 45.1935,
+    "lon": 5.7627
+  },
+  {
+    "category": "Organisation",
+    "name": "Météo-France — CEN (Centre d'Études de la Neige)",
+    "type": "Government",
+    "region": "European Alps / Pyrenees",
+    "country": "Grenoble, France",
+    "focus": "Operational snow & avalanche; glacier-adjacent",
+    "website": "https://cnrm.sedoo.fr/en/snow-research-center-cen-2/",
+    "notes": "",
+    "lat": 45.1935,
+    "lon": 5.7627
+  },
+  {
+    "category": "Organisation",
+    "name": "Università degli Studi di Milano — Glaciology group",
+    "type": "Research",
+    "region": "European Alps",
+    "country": "Milan, Italy",
+    "focus": "Italian alpine glaciology (Diolaiuti, D'Agata)",
+    "website": "https://www.unimi.it",
+    "notes": "Partner of Comitato Glaciologico Italiano.",
+    "lat": 45.4642,
+    "lon": 9.19
+  },
+  {
+    "category": "Organisation",
+    "name": "Comitato Glaciologico Italiano (CGI)",
+    "type": "NGO",
+    "region": "European Alps / Apennines",
+    "country": "Torino, Italy",
+    "focus": "Italy's national glaciological society & inventory",
+    "website": "https://www.glaciologia.it",
+    "notes": "Founded 1895.",
+    "lat": 45.0703,
+    "lon": 7.6869
+  },
+  {
+    "category": "Organisation",
+    "name": "Austrian Academy of Sciences — IGF",
+    "type": "Research",
+    "region": "European Alps",
+    "country": "Innsbruck, Austria",
+    "focus": "High-altitude & cryosphere research",
+    "website": "https://www.oeaw.ac.at/en/igf",
+    "notes": "",
+    "lat": 47.2692,
+    "lon": 11.4041
+  },
+  {
+    "category": "Organisation",
+    "name": "University of Innsbruck — ACINN / Glaciology",
+    "type": "Research",
+    "region": "European Alps",
+    "country": "Innsbruck, Austria",
+    "focus": "Global glacier modelling (Kaser, Fischer, Marzeion)",
+    "website": "https://www.uibk.ac.at",
+    "notes": "Key alpine & global modelling group.",
+    "lat": 47.2692,
+    "lon": 11.4041
+  },
+  {
+    "category": "Organisation",
+    "name": "GLACIOCLIM (Long-term alpine observatory)",
+    "type": "Research",
+    "region": "European Alps / Global",
+    "country": "Grenoble, France",
+    "focus": "Long-term reference glacier monitoring observatory",
+    "website": "https://glacioclim.osug.fr",
+    "notes": "French long-term observatory.",
+    "lat": 45.1935,
+    "lon": 5.7627
+  },
+  {
+    "category": "Organisation",
+    "name": "Bavarian Academy of Sciences — Glaciological Commission",
+    "type": "Research",
+    "region": "European Alps",
+    "country": "Munich, Germany",
+    "focus": "German alpine glacier monitoring (Zugspitze, Schneeferner)",
+    "website": "https://www.glaziologie.de",
+    "notes": "Runs Germany's glacier inventory.",
+    "lat": 48.1351,
+    "lon": 11.582
+  },
+  {
+    "category": "Organisation",
+    "name": "Mountain Wilderness (France / Switzerland / Italy)",
+    "type": "NGO",
+    "region": "European Alps / Global",
+    "country": "Grenoble, France",
+    "focus": "Mountain conservation advocacy incl. glaciers",
+    "website": "https://www.mountainwilderness.fr",
+    "notes": "",
+    "lat": 45.1885,
+    "lon": 5.7245
+  },
+  {
+    "category": "Organisation",
+    "name": "Marges Sauvages",
+    "type": "NGO",
+    "region": "Global — Alps, Polar",
+    "country": "France",
+    "focus": "Campaigning for protection of postglacial ecosystems",
+    "website": "https://www.margessauvages.org",
+    "notes": "Co-organiser of UNESCO 2025 governance event.",
+    "lat": 48.8566,
+    "lon": 2.3522
+  },
+  {
+    "category": "Organisation",
+    "name": "Ice Memory Foundation",
+    "type": "NGO",
+    "region": "European Alps / Global",
+    "country": "Grenoble, France & Venice, Italy",
+    "focus": "Coring mountain glaciers to preserve ice archives for future science",
+    "website": "https://www.ice-memory.org",
+    "notes": "UNESCO-patronage ice-core archive.",
+    "lat": 45.1935,
+    "lon": 5.7627
+  },
+  {
+    "category": "Organisation",
+    "name": "NVE — Norwegian Water Resources & Energy Directorate (Glacier group)",
+    "type": "Government",
+    "region": "Scandinavia",
+    "country": "Oslo, Norway",
+    "focus": "Norway's national glacier monitoring",
+    "website": "https://www.nve.no",
+    "notes": "Operational glacier mass balance network.",
+    "lat": 59.9139,
+    "lon": 10.7522
+  },
+  {
+    "category": "Organisation",
+    "name": "Norwegian Polar Institute",
+    "type": "Government",
+    "region": "Svalbard / mountain glaciers of Arctic islands",
+    "country": "Tromsø, Norway",
+    "focus": "Cryosphere research in Svalbard & Jan Mayen",
+    "website": "https://www.npolar.no",
+    "notes": "",
+    "lat": 69.6492,
+    "lon": 18.9553
+  },
+  {
+    "category": "Organisation",
+    "name": "University of Oslo — Department of Geosciences (Glaciology)",
+    "type": "Research",
+    "region": "Scandinavia / Svalbard",
+    "country": "Oslo, Norway",
+    "focus": "Glacier dynamics, remote sensing, modelling",
+    "website": "https://www.mn.uio.no/geo",
+    "notes": "Home lab of Ugo Nanni's glacier-seismology work.",
+    "lat": 59.9404,
+    "lon": 10.7218
+  },
+  {
+    "category": "Organisation",
+    "name": "University Centre in Svalbard (UNIS)",
+    "type": "Research",
+    "region": "Svalbard",
+    "country": "Longyearbyen, Norway",
+    "focus": "Arctic glacier & permafrost teaching and research",
+    "website": "https://www.unis.no",
+    "notes": "",
+    "lat": 78.2232,
+    "lon": 15.6267
+  },
+  {
+    "category": "Organisation",
+    "name": "Stockholm University — Tarfala Research Station",
+    "type": "Research",
+    "region": "Scandinavia",
+    "country": "Kiruna, Sweden",
+    "focus": "Longest-running Swedish glacier monitoring (Storglaciären)",
+    "website": "https://www.su.se/tarfala",
+    "notes": "Continuous mass balance since 1946.",
+    "lat": 67.9186,
+    "lon": 18.6236
+  },
+  {
+    "category": "Organisation",
+    "name": "Icelandic Meteorological Office — Glaciology group",
+    "type": "Government",
+    "region": "Iceland",
+    "country": "Reykjavík, Iceland",
+    "focus": "Icelandic glacier monitoring, GLOF & jökulhlaup warning",
+    "website": "https://en.vedur.is",
+    "notes": "",
+    "lat": 64.1355,
+    "lon": -21.8954
+  },
+  {
+    "category": "Organisation",
+    "name": "Iceland Glaciological Society (Jöklarannsóknafélag Íslands)",
+    "type": "NGO",
+    "region": "Iceland",
+    "country": "Reykjavík, Iceland",
+    "focus": "Citizen scientists co-monitoring Iceland's glaciers",
+    "website": "https://jorfi.is",
+    "notes": "Long-running volunteer network.",
+    "lat": 64.1355,
+    "lon": -21.8954
+  },
+  {
+    "category": "Organisation",
+    "name": "USGS — Benchmark Glacier Program",
+    "type": "Government",
+    "region": "Alaska / Rockies / Cascades",
+    "country": "USA",
+    "focus": "Monitoring of Gulkana, Wolverine, Sperry, South Cascade, Lemon Creek glaciers",
+    "website": "https://www.usgs.gov/programs/climate-research-and-development-program/science/usgs-benchmark-glacier-project",
+    "notes": "Longest-running US glacier dataset.",
+    "lat": 64.2008,
+    "lon": -149.4937
+  },
+  {
+    "category": "Organisation",
+    "name": "USGS Repeat Photography Project (Glacier National Park)",
+    "type": "Research",
+    "region": "Rockies",
+    "country": "Bozeman, Montana, USA",
+    "focus": "Re-photographing historic glacier images in Glacier NP since 1997; 58 paired images online",
+    "website": "https://www.usgs.gov/centers/norock/science/repeat-photography-project",
+    "notes": "Iconic visual documentation.",
+    "lat": 48.6969,
+    "lon": -113.718
+  },
+  {
+    "category": "Organisation",
+    "name": "University of Alaska Fairbanks — Geophysical Institute",
+    "type": "Research",
+    "region": "Alaska",
+    "country": "Fairbanks, Alaska",
+    "focus": "Alaskan glacier dynamics, surges, mass balance",
+    "website": "https://www.gi.alaska.edu",
+    "notes": "Regine Hock legacy group.",
+    "lat": 64.8588,
+    "lon": -147.8294
+  },
+  {
+    "category": "Organisation",
+    "name": "NASA Goddard / JPL — Cryospheric Sciences",
+    "type": "Government",
+    "region": "Global / mountain",
+    "country": "USA",
+    "focus": "Satellite cryosphere (ICESat-2, GRACE-FO) applied to mountain glaciers",
+    "website": "https://earth.gsfc.nasa.gov/cryo",
+    "notes": "",
+    "lat": 38.9917,
+    "lon": -76.8527
+  },
+  {
+    "category": "Organisation",
+    "name": "National Snow & Ice Data Center (NSIDC)",
+    "type": "Research",
+    "region": "Global",
+    "country": "Boulder, CO, USA",
+    "focus": "Cryosphere data archive including GLIMS",
+    "website": "https://nsidc.org",
+    "notes": "",
+    "lat": 40.015,
+    "lon": -105.2705
+  },
+  {
+    "category": "Organisation",
+    "name": "North Cascades Glacier Climate Project",
+    "type": "Citizen Science",
+    "region": "Cascades",
+    "country": "Washington, USA",
+    "focus": "Mauri Pelto's long-term Cascade glacier monitoring",
+    "website": "https://glacierchange.wordpress.com",
+    "notes": "One of the longest citizen-led glacier programmes.",
+    "lat": 48.7718,
+    "lon": -121.8139
+  },
+  {
+    "category": "Organisation",
+    "name": "Natural Resources Canada — Geological Survey of Canada (Glacier section)",
+    "type": "Government",
+    "region": "Canadian Rockies / Coast Mtns / Arctic mountains",
+    "country": "Canada",
+    "focus": "Canadian national glacier monitoring",
+    "website": "https://www.nrcan.gc.ca",
+    "notes": "",
+    "lat": 45.4215,
+    "lon": -75.6972
+  },
+  {
+    "category": "Organisation",
+    "name": "University of Northern British Columbia — Geography (Glaciology)",
+    "type": "Research",
+    "region": "Coast Mtns / Canadian Rockies",
+    "country": "Prince George, BC, Canada",
+    "focus": "BC glacier hydrology & hazards",
+    "website": "https://www.unbc.ca",
+    "notes": "Brian Menounos group.",
+    "lat": 53.9171,
+    "lon": -122.7497
+  },
+  {
+    "category": "Organisation",
+    "name": "Hakai Institute — Cryosphere Node",
+    "type": "Research",
+    "region": "Coast Mtns / BC",
+    "country": "Heriot Bay, BC, Canada",
+    "focus": "Coastal-cryosphere monitoring in BC",
+    "website": "https://www.hakai.org",
+    "notes": "",
+    "lat": 50.1163,
+    "lon": -125.2145
+  },
+  {
+    "category": "Organisation",
+    "name": "Mountain Legacy Project",
+    "type": "Research",
+    "region": "Canadian Rockies / Coast Mtns",
+    "country": "University of Victoria, BC, Canada",
+    "focus": "World's largest repeat-photography archive of mountain landscapes, incl. glaciers",
+    "website": "https://mountainlegacy.ca",
+    "notes": "120,000+ historic photos; 10,000+ repeats. Alpine Club of Canada partner for IYGP 2025.",
+    "lat": 48.4284,
+    "lon": -123.3656
+  },
+  {
+    "category": "Organisation",
+    "name": "Glaciers of the American West (Portland State University)",
+    "type": "Research",
+    "region": "Rockies / Cascades / Sierra Nevada",
+    "country": "Portland, OR, USA",
+    "focus": "Database of glaciers in the western US; long-term change tracking",
+    "website": "https://glaciers.us",
+    "notes": "Andrew Fountain's project.",
+    "lat": 45.5152,
+    "lon": -122.6784
+  },
+  {
+    "category": "Organisation",
+    "name": "Glacier RePhoto Project",
+    "type": "Research",
+    "region": "Rockies / Cascades / Sierra Nevada",
+    "country": "Portland, OR, USA",
+    "focus": "Database of 270+ repeat-photo stations across the American West",
+    "website": "https://rephoto.glaciers.us",
+    "notes": "Hassan Basagic, with PSU / Mazamas / AAC funding.",
+    "lat": 45.5152,
+    "lon": -122.6784
+  },
+  {
+    "category": "Organisation",
+    "name": "Alpine of the Americas Project",
+    "type": "Citizen Science",
+    "region": "North & South American Cordillera",
+    "country": "USA",
+    "focus": "Crowd-sourced repeat photography for alpine climate change",
+    "website": "http://repeatphotography.org",
+    "notes": "Verify current activity.",
+    "lat": 39.7392,
+    "lon": -104.9903
+  },
+  {
+    "category": "Organisation",
+    "name": "NIWA — National Institute of Water & Atmospheric Research",
+    "type": "Government",
+    "region": "Southern Alps (NZ)",
+    "country": "Wellington, New Zealand",
+    "focus": "Annual end-of-summer NZ glacier snowline survey since 1977",
+    "website": "https://niwa.co.nz",
+    "notes": "Longest-running NZ glacier monitoring.",
+    "lat": -41.2865,
+    "lon": 174.7762
+  },
+  {
+    "category": "Organisation",
+    "name": "Victoria University of Wellington — Antarctic Research Centre",
+    "type": "Research",
+    "region": "Southern Alps (NZ)",
+    "country": "Wellington, New Zealand",
+    "focus": "NZ alpine glacier & ice-climate research",
+    "website": "https://www.wgtn.ac.nz/antarctic",
+    "notes": "",
+    "lat": -41.2906,
+    "lon": 174.7681
+  },
+  {
+    "category": "Organisation",
+    "name": "UNESCO East Africa — Tropical Glaciers programme",
+    "type": "Intergovernmental",
+    "region": "Tropical East Africa",
+    "country": "Nairobi, Kenya",
+    "focus": "Coordination for Rwenzori / Kilimanjaro / Mt Kenya monitoring",
+    "website": "https://www.unesco.org/en/fieldoffice/nairobi",
+    "notes": "",
+    "lat": -1.2921,
+    "lon": 36.8219
+  },
+  {
+    "category": "Organisation",
+    "name": "Makerere University — Mountain Resource Centre",
+    "type": "Research",
+    "region": "Rwenzori",
+    "country": "Kampala, Uganda",
+    "focus": "Uganda-based tropical glacier & mountain ecology",
+    "website": "https://mak.ac.ug",
+    "notes": "Partner on Rwenzori expeditions.",
+    "lat": 0.3294,
+    "lon": 32.5669
+  },
+  {
+    "category": "Organisation",
+    "name": "Uganda Wildlife Authority — Rwenzori Mountains National Park",
+    "type": "Government",
+    "region": "Rwenzori",
+    "country": "Kasese, Uganda",
+    "focus": "Protected-area management for the last Ugandan glaciers",
+    "website": "https://www.ugandawildlife.org",
+    "notes": "",
+    "lat": 0.1861,
+    "lon": 29.8731
+  },
+  {
+    "category": "Organisation",
+    "name": "Tanzania National Parks Authority — Kilimanjaro",
+    "type": "Government",
+    "region": "Kilimanjaro",
+    "country": "Arusha, Tanzania",
+    "focus": "Protected-area manager of Kilimanjaro's glaciers",
+    "website": "https://www.tanzaniaparks.go.tz",
+    "notes": "",
+    "lat": -3.3869,
+    "lon": 37.3539
+  },
+  {
+    "category": "Organisation",
+    "name": "University of Dar es Salaam — Dept. of Geography",
+    "type": "Research",
+    "region": "Kilimanjaro",
+    "country": "Dar es Salaam, Tanzania",
+    "focus": "Local tropical glacier research",
+    "website": "https://www.udsm.ac.tz",
+    "notes": "",
+    "lat": -6.7924,
+    "lon": 39.2083
+  },
+  {
+    "category": "Organisation",
+    "name": "CAIAG — Central Asian Institute for Applied Geosciences",
+    "type": "Research",
+    "region": "Tien Shan / Pamir",
+    "country": "Bishkek, Kyrgyzstan",
+    "focus": "Regional cryosphere & geohazard research",
+    "website": "https://www.caiag.kg",
+    "notes": "GFZ-partnered.",
+    "lat": 42.8746,
+    "lon": 74.5698
+  },
+  {
+    "category": "Organisation",
+    "name": "University of Central Asia — Mountain Societies Research Institute",
+    "type": "Research",
+    "region": "Pamir / Tien Shan",
+    "country": "Bishkek / Khorog / Naryn",
+    "focus": "Mountain communities, glaciers & climate",
+    "website": "https://www.ucentralasia.org",
+    "notes": "",
+    "lat": 42.8746,
+    "lon": 74.5698
+  },
+  {
+    "category": "Organisation",
+    "name": "Tajik National University — Glaciology",
+    "type": "Research",
+    "region": "Pamir",
+    "country": "Dushanbe, Tajikistan",
+    "focus": "Pamir glacier research",
+    "website": "https://tnu.tj",
+    "notes": "",
+    "lat": 38.5598,
+    "lon": 68.787
+  },
+  {
+    "category": "Organisation",
+    "name": "Extreme Ice Survey (James Balog)",
+    "type": "Media/Storytelling",
+    "region": "Global — mountain & polar",
+    "country": "USA",
+    "focus": "Long-term time-lapse photography of retreating glaciers",
+    "website": "https://extremeicesurvey.org",
+    "notes": "Chasing Ice (2012).",
+    "lat": 40.015,
+    "lon": -105.2705
+  },
+  {
+    "category": "Organisation",
+    "name": "On the Trail of the Glaciers",
+    "type": "Media/Storytelling",
+    "region": "Global — mountain",
+    "country": "Italy (Macromicro Association)",
+    "focus": "Photographic-scientific project: 8 expeditions, 13 years — Karakoram, Caucasus, Alaska, Andes, Himalaya, Alps",
+    "website": "https://onthetrailoftheglaciers.com",
+    "notes": "Fabiano Ventura. Largest comparative photographic archive of glacial change.",
+    "lat": 41.9028,
+    "lon": 12.4964
+  },
+  {
+    "category": "Organisation",
+    "name": "Glaciers Online (SwissEduc)",
+    "type": "Media/Storytelling",
+    "region": "Global — mountain",
+    "country": "Switzerland",
+    "focus": "Photo-rich educational resource on glaciers worldwide",
+    "website": "https://www.swisseduc.ch/glaciers/",
+    "notes": "Jürg Alean & Michael Hambrey.",
+    "lat": 47.3769,
+    "lon": 8.5417
+  },
+  {
+    "category": "Organisation",
+    "name": "Re.Photos",
+    "type": "Citizen Science",
+    "region": "Global",
+    "country": "Germany",
+    "focus": "Open platform for uploading and comparing repeat photographs",
+    "website": "https://www.re.photos",
+    "notes": "Crowdsourced rephoto.",
+    "lat": 52.52,
+    "lon": 13.405
+  },
+  {
+    "category": "Organisation",
+    "name": "Glacier Hub (Columbia Climate School)",
+    "type": "Media/Storytelling",
+    "region": "Global",
+    "country": "New York, USA",
+    "focus": "Academic-journalism hub on glaciers & people",
+    "website": "https://glacierhub.org/",
+    "notes": "Ben Orlove's project.",
+    "lat": 40.7128,
+    "lon": -74.006
+  },
+  {
+    "category": "Organisation",
+    "name": "Rolex Perpetual Planet / National Geographic Society",
+    "type": "Private/Philanthropic",
+    "region": "Global",
+    "country": "Geneva / Washington DC",
+    "focus": "Funds cryosphere exploration & science",
+    "website": "https://www.rolex.org/rolex-perpetual-planet",
+    "notes": "Major philanthropic funder.",
+    "lat": 46.2266,
+    "lon": 6.1407
+  },
+  {
+    "category": "Organisation",
+    "name": "Témoins Polaires / Polar Witnesses",
+    "type": "Media/Storytelling",
+    "region": "Global",
+    "country": "France",
+    "focus": "Educational programme linking expeditions to classrooms",
+    "website": "https://temoinspolaires.fr/",
+    "notes": "Verify current URL.",
+    "lat": 48.8566,
+    "lon": 2.3522
+  },
+  {
+    "category": "Organisation",
+    "name": "Adventure Scientists",
+    "type": "Citizen Science",
+    "region": "Global — mountain",
+    "country": "Bozeman, MT, USA",
+    "focus": "Recruits adventurers to collect scientific data incl. glacier photography",
+    "website": "https://www.adventurescientists.org",
+    "notes": "Active glacier photography programme.",
+    "lat": 45.677,
+    "lon": -111.0429
+  },
+  {
+    "category": "Organisation",
+    "name": "Quechua & Aymara community monitoring — Cordillera Blanca / Vilcanota",
+    "type": "Indigenous/Community",
+    "region": "Tropical Andes",
+    "country": "Peru",
+    "focus": "Community water guardians and glacier witnesses",
+    "website": "",
+    "notes": "Work through INAIGEM, The Mountain Institute.",
+    "lat": -13.532,
+    "lon": -71.9675
+  },
+  {
+    "category": "Organisation",
+    "name": "The Mountain Institute — Andean programme",
+    "type": "NGO",
+    "region": "Tropical Andes",
+    "country": "Huaraz, Peru",
+    "focus": "Community-based glacier & water adaptation",
+    "website": "https://mountain.org",
+    "notes": "",
+    "lat": -9.5278,
+    "lon": -77.5278
+  },
+  {
+    "category": "Organisation",
+    "name": "Sherpa-led monitoring networks (Khumbu)",
+    "type": "Indigenous/Community",
+    "region": "Himalaya — Khumbu",
+    "country": "Nepal",
+    "focus": "Community observers of Khumbu glaciers & GLOF risk",
+    "website": "",
+    "notes": "Partners incl. ICIMOD & Kathmandu Univ.",
+    "lat": 27.9881,
+    "lon": 86.925
+  },
+  {
+    "category": "Organisation",
+    "name": "Sámi-led environmental observing in Sápmi mountains",
+    "type": "Indigenous/Community",
+    "region": "Scandinavia",
+    "country": "Sápmi (Norway/Sweden/Finland)",
+    "focus": "Indigenous observations of mountain snow & ice change",
+    "website": "",
+    "notes": "Links to ICR / Sámi Council.",
+    "lat": 68.35,
+    "lon": 18.8167
+  },
+  {
+    "category": "Organisation",
+    "name": "Cryosphere Consulting (Heïdi Sevestre)",
+    "type": "Company/Consultancy",
+    "region": "Global",
+    "country": "France / Svalbard",
+    "focus": "Glaciology expertise, communication & expeditions",
+    "website": "https://www.heidisevestre.com",
+    "notes": "Your own entry.",
+    "lat": 45.8992,
+    "lon": 6.1294
+  },
+  {
+    "category": "Organisation",
+    "name": "Natural Power / cryo-hydrology consultancies",
+    "type": "Company/Consultancy",
+    "region": "Global",
+    "country": "UK / EU",
+    "focus": "Glacier hydropower & water yield consulting",
+    "website": "https://www.naturalpower.com",
+    "notes": "",
+    "lat": 55.0,
+    "lon": -4.0
+  },
+  {
+    "category": "Organisation",
+    "name": "DHI Group — Glacier & snow hydrology unit",
+    "type": "Company/Consultancy",
+    "region": "Global",
+    "country": "Hørsholm, Denmark",
+    "focus": "Engineering consultancy including glacier-fed water systems",
+    "website": "https://www.dhigroup.com",
+    "notes": "",
+    "lat": 55.8947,
+    "lon": 12.505
+  },
+  {
+    "category": "Organisation",
+    "name": "Scott Polar Research Institute (SPRI) — University of Cambridge",
+    "type": "Research",
+    "region": "Global / Polar & mountain",
+    "country": "Cambridge, UK",
+    "focus": "World-leading centre for glaciology and polar science; NERC CPOM node; hosts World Data Centre for Glaciology",
+    "website": "https://www.spri.cam.ac.uk/research/glaciology/",
+    "notes": "Founded 1920. Includes Polar Museum and Polar Library.",
+    "lat": 52.1951,
+    "lon": 0.1208
+  },
+  {
+    "category": "Organisation",
+    "name": "Aberystwyth University — Centre for Glaciology",
+    "type": "Research",
+    "region": "Global / European Alps / Arctic",
+    "country": "Aberystwyth, Wales, UK",
+    "focus": "One of the UK's leading glacier dynamics and palaeoglaciology research groups; Svalbard programme since 1993",
+    "website": "https://www.aber.ac.uk/en/dges/research/centre-glaciology/",
+    "notes": "Founded 1994 within Dept of Geography & Earth Sciences.",
+    "lat": 52.4153,
+    "lon": -4.0829
+  },
+  {
+    "category": "Organisation",
+    "name": "Swansea University — Glaciology Group",
+    "type": "Research",
+    "region": "Global / Antarctic / Arctic",
+    "country": "Swansea, Wales, UK",
+    "focus": "World-leading ice-sheet simulation, satellite remote sensing and geophysical field methods; predicted A-68 calving",
+    "website": "https://www.swansea.ac.uk/geography/research-and-impact/swansea-glaciology-group/",
+    "notes": "Ranked top 15 UK Geography for research impact (REF 2021).",
+    "lat": 51.6214,
+    "lon": -3.9434
+  },
+  {
+    "category": "Organisation",
+    "name": "University of Edinburgh — Edinburgh Cryosphere",
+    "type": "Research",
+    "region": "Global / Greenland / Antarctic",
+    "country": "Edinburgh, Scotland",
+    "focus": "Cryosphere research group within School of GeoSciences; ice sheets, glaciers, snow and climate interactions",
+    "website": "https://edinburghcryosphere.org/",
+    "notes": "Part of the NERC-funded SENSE CDT. Donald Slater's fjord-glacier work.",
+    "lat": 55.9533,
+    "lon": -3.1883
+  },
+  {
+    "category": "Organisation",
+    "name": "Association Moraine — Pyrénées Glaciological Association",
+    "type": "NGO",
+    "region": "Pyrenees",
+    "country": "France (Tarbes)",
+    "focus": "Annual monitoring of French Pyrenean glaciers since 2001; close collaboration with Spanish counterparts; public outreach",
+    "website": "http://asso.moraine.free.fr",
+    "notes": "Founded by Pierre René. Observatory of the Glaciers of the French Pyrénées. 3/4 of Pyrenean glaciers lost since 1850.",
+    "lat": 43.2327,
+    "lon": 0.0778
+  },
+  {
+    "category": "Organisation",
+    "name": "CSIC — CryoPyr / Instituto Pirenaico de Ecología",
+    "type": "Research",
+    "region": "Pyrenees",
+    "country": "Zaragoza, Spain",
+    "focus": "Spanish national research on Pyrenean glacier dynamics, paraglacial processes and projections; BBVA-funded monitoring",
+    "website": "https://cryopyr.csic.es/en/",
+    "notes": "Annual monitoring of all Spanish Pyrenean glaciers. Publishes in Pirineos journal.",
+    "lat": 41.6488,
+    "lon": -0.8891
+  },
+  {
+    "category": "Organisation",
+    "name": "UNAM — Instituto de Geofísica, Glaciology section",
+    "type": "Research",
+    "region": "Trans-Mexican Volcanic Belt",
+    "country": "Mexico City, Mexico",
+    "focus": "60+ years of glacier research on Citlaltépetl, Popocatépetl & Iztaccíhuatl; last monitoring of Mexico's 12 remaining glaciers",
+    "website": "https://www.geofisica.unam.mx/",
+    "notes": "Glaciological studies published in Revista Mexicana de Ciencias Geológicas.",
+    "lat": 19.3232,
+    "lon": -99.1833
+  },
+  {
+    "category": "Organisation",
+    "name": "ICAE — Instituto de Ciencias Ambientales y Ecológicas, Universidad de Los Andes",
+    "type": "Research",
+    "region": "Tropical Andes — Venezuelan Andes",
+    "country": "Mérida, Venezuela",
+    "focus": "Decades-long monitoring of the Humboldt Glacier — Venezuela's last glacier, now at < 2 hectares",
+    "website": "https://www.icae.ula.ve/",
+    "notes": "Venezuela now considered the first postglacial Andean nation. Data is irreplaceable.",
+    "lat": 8.5897,
+    "lon": -71.1445
+  },
+  {
+    "category": "Organisation",
+    "name": "INAMHI — Instituto Nacional de Meteorología e Hidrología, Programa Glaciares Ecuador",
+    "type": "Government",
+    "region": "Tropical Andes — Ecuador",
+    "country": "Quito, Ecuador",
+    "focus": "National glacier monitoring since 1994; inventory and mass balance of Cotopaxi, Antisana, Cayambe and others",
+    "website": "https://www.inamhi.gob.ec/",
+    "notes": "Bolívar Cáceres leads glacier programme. 53% average glacier loss nationally.",
+    "lat": -0.2201,
+    "lon": -78.5123
+  },
+  {
+    "category": "Organisation",
+    "name": "BMKG — Badan Meteorologi Klimatologi dan Geofisika (Glacier unit)",
+    "type": "Government",
+    "region": "Puncak Jaya — West Papua",
+    "country": "Jakarta, Indonesia",
+    "focus": "National meteorological agency monitoring Indonesia's last glaciers on Puncak Jaya; ice core extraction since 2010",
+    "website": "https://www.bmkg.go.id/",
+    "notes": "Donaldi Sukma Permana leads glacier research. Glaciers may disappear by 2026.",
+    "lat": -6.1164,
+    "lon": 106.8286
+  },
+  {
+    "category": "Organisation",
+    "name": "Université Libre de Bruxelles — Laboratoire de Glaciologie (GLACIOL)",
+    "type": "Research",
+    "region": "Global / Antarctic / Arctic",
+    "country": "Brussels, Belgium",
+    "focus": "Numerical ice-sheet modelling (GEMICE group) and physico-chemical ice properties (PROPICE group); Belgian polar research",
+    "website": "https://glaciologie.ulb.be/",
+    "notes": "Led by Frank Pattyn. Part of Belgian Science Policy Office polar platform.",
+    "lat": 50.8225,
+    "lon": 4.3958
+  },
+  {
+    "category": "Organisation",
+    "name": "Université de Strasbourg — ITES / EOST (Glaciology)",
+    "type": "Research",
+    "region": "European Alps / Global",
+    "country": "Strasbourg, France",
+    "focus": "Ice dynamics, glacier mass changes and palaeo-glacial stratigraphy research within Institut Terre & Environnement de Strasbourg",
+    "website": "https://ites.unistra.fr/en/",
+    "notes": "Joint CNRS/Unistra unit. J.-F. Ghienne leads palaeo-glacial work.",
+    "lat": 48.5734,
+    "lon": 7.7521
+  },
+  {
+    "category": "Organisation",
+    "name": "Instituto de la Patagonia — Universidad de Magallanes (UMAG)",
+    "type": "Research",
+    "region": "Southern Andes / Patagonia",
+    "country": "Punta Arenas, Chile",
+    "focus": "Research on Patagonian glaciers, palaeoclimate and southern ecosystems; gateway to Chilean Patagonian icefields",
+    "website": "https://institutodelapatagonia.umag.cl/",
+    "notes": "Founded 1969. Based in Punta Arenas, closest university to the Southern Patagonian Icefield.",
+    "lat": -53.1548,
+    "lon": -70.9063
+  },
+  {
+    "category": "Organisation",
+    "name": "CEQUA — Centro de Estudios del Cuaternario de Fuego-Patagonia y Antártica",
+    "type": "Research",
+    "region": "Southern Andes / Patagonia",
+    "country": "Punta Arenas, Chile",
+    "focus": "Quaternary science and glacier research in Fuego-Patagonia; links to UMAG and Chilean Antarctic science",
+    "website": "https://www.facebook.com/centro.cequa/",
+    "notes": "Punta Arenas-based. Collaborates with DGA and Chilean Antarctic Institute (INACH).",
+    "lat": -53.1548,
+    "lon": -70.91
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Kluane / Wrangell-St. Elias / Glacier Bay / Tatshenshini-Alsek",
+    "type": "World Heritage — Natural",
+    "region": "Alaska / Yukon / BC",
+    "country": "Canada & USA",
+    "focus": "Largest non-polar icefield in the world; impressive complex of glaciers and high peaks",
+    "website": "https://whc.unesco.org/en/list/72/",
+    "notes": "Transboundary mixed property. Site #1 by glacierized area.",
+    "lat": 60.5,
+    "lon": -140.0
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Los Glaciares National Park",
+    "type": "World Heritage — Natural",
+    "region": "Southern Andes / Patagonia",
+    "country": "Argentina",
+    "focus": "Perito Moreno and Upsala icefield glaciers feeding Lake Argentino",
+    "website": "https://whc.unesco.org/en/list/145/",
+    "notes": "2,612 glaciers; 2nd largest glacierized area on WHS list.",
+    "lat": -49.6833,
+    "lon": -72.9667
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Te Wahipounamu — South West New Zealand",
+    "type": "World Heritage — Natural",
+    "region": "Southern Alps (NZ)",
+    "country": "New Zealand",
+    "focus": "Fiordland and Westland glaciers; ~20% ice loss since 2000",
+    "website": "https://whc.unesco.org/en/list/551/",
+    "notes": "Includes Franz Josef and Fox glaciers.",
+    "lat": -44.6667,
+    "lon": 168.0
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Canadian Rocky Mountain Parks",
+    "type": "World Heritage — Natural",
+    "region": "Canadian Rockies",
+    "country": "Canada",
+    "focus": "Banff, Jasper, Yoho, Kootenay National Parks; Columbia Icefield",
+    "website": "https://whc.unesco.org/en/list/304/",
+    "notes": "973 glaciers; 15.9% mass loss since 2000.",
+    "lat": 51.5,
+    "lon": -116.5
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Swiss Alps Jungfrau-Aletsch",
+    "type": "World Heritage — Natural",
+    "region": "European Alps",
+    "country": "Switzerland",
+    "focus": "Aletsch Glacier — the largest and longest in Europe",
+    "website": "https://whc.unesco.org/en/list/1037/",
+    "notes": "319 glaciers; 25.9% mass loss since 2000.",
+    "lat": 46.55,
+    "lon": 8.0167
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Sagarmatha National Park",
+    "type": "World Heritage — Natural",
+    "region": "Himalaya — Khumbu",
+    "country": "Nepal",
+    "focus": "Mt Everest area; Khumbu, Ngozumpa, Imja and other glaciers",
+    "website": "https://whc.unesco.org/en/list/120/",
+    "notes": "249 glaciers; 14.7% mass loss since 2000.",
+    "lat": 27.9881,
+    "lon": 86.925
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Huascarán National Park",
+    "type": "World Heritage — Natural",
+    "region": "Tropical Andes — Cordillera Blanca",
+    "country": "Peru",
+    "focus": "World's highest tropical mountain range; 600+ glaciers",
+    "website": "https://whc.unesco.org/en/list/333/",
+    "notes": "493 glaciers; 15% mass loss since 2000.",
+    "lat": -9.1167,
+    "lon": -77.6667
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Khangchendzonga National Park",
+    "type": "World Heritage — Mixed",
+    "region": "Eastern Himalaya",
+    "country": "India",
+    "focus": "Third-highest peak in the world; Zemu and other glaciers",
+    "website": "https://whc.unesco.org/en/list/1513/",
+    "notes": "284 glaciers; 13% mass loss since 2000.",
+    "lat": 27.703,
+    "lon": 88.147
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Nanda Devi and Valley of Flowers National Parks",
+    "type": "World Heritage — Natural",
+    "region": "Western Himalaya",
+    "country": "India",
+    "focus": "Sanctuary of glaciated peaks in Uttarakhand",
+    "website": "https://whc.unesco.org/en/list/335/",
+    "notes": "",
+    "lat": 30.5,
+    "lon": 79.9
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Great Himalayan National Park Conservation Area",
+    "type": "World Heritage — Natural",
+    "region": "Western Himalaya",
+    "country": "India",
+    "focus": "Pristine monsoon-affected high-altitude ecosystem",
+    "website": "https://whc.unesco.org/en/list/1406/",
+    "notes": "155 glaciers; 16% mass loss since 2000.",
+    "lat": 31.7333,
+    "lon": 77.55
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Manas Wildlife Sanctuary (glacier-fed)",
+    "type": "World Heritage — Natural",
+    "region": "Eastern Himalaya",
+    "country": "India",
+    "focus": "Foothill sanctuary fed by Himalayan glacial rivers",
+    "website": "https://whc.unesco.org/en/list/338/",
+    "notes": "Downstream of glaciated catchments.",
+    "lat": 26.7333,
+    "lon": 90.95
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Jiuzhaigou Valley Scenic & Historic Interest Area",
+    "type": "World Heritage — Natural",
+    "region": "Tibetan Plateau margin",
+    "country": "China",
+    "focus": "Min Shan high-altitude karst and glacier-fed lakes",
+    "website": "https://whc.unesco.org/en/list/637/",
+    "notes": "",
+    "lat": 33.2,
+    "lon": 103.9167
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Huanglong Scenic & Historic Interest Area",
+    "type": "World Heritage — Natural",
+    "region": "Tibetan Plateau margin",
+    "country": "China",
+    "focus": "Glacier-fed travertine landscapes",
+    "website": "https://whc.unesco.org/en/list/638/",
+    "notes": "",
+    "lat": 32.75,
+    "lon": 103.8167
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Sichuan Giant Panda Sanctuaries — Wolong, Mt Siguniang, Jiajin Mts",
+    "type": "World Heritage — Natural",
+    "region": "Eastern Tibetan Plateau",
+    "country": "China",
+    "focus": "Glaciated high peaks above panda habitats",
+    "website": "https://whc.unesco.org/en/list/1213/",
+    "notes": "35.9% mass loss since 2000 — 4th-fastest retreat on list.",
+    "lat": 31.0167,
+    "lon": 103.1667
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Three Parallel Rivers of Yunnan Protected Areas",
+    "type": "World Heritage — Natural",
+    "region": "Hengduan Mountains",
+    "country": "China",
+    "focus": "Meili/Kawagebo and other high-altitude glaciers",
+    "website": "https://whc.unesco.org/en/list/1083/",
+    "notes": "57.2% mass loss — #1 fastest-retreating on WHS list.",
+    "lat": 28.0833,
+    "lon": 98.6167
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Qinghai Hoh Xil",
+    "type": "World Heritage — Natural",
+    "region": "Tibetan Plateau",
+    "country": "China",
+    "focus": "High-altitude alpine environment with ice caps and glaciers",
+    "website": "https://whc.unesco.org/en/list/1540/",
+    "notes": "",
+    "lat": 35.0,
+    "lon": 92.0
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Western Tien-Shan",
+    "type": "World Heritage — Natural",
+    "region": "Central Asia — Tien Shan",
+    "country": "Kazakhstan / Kyrgyzstan / Uzbekistan",
+    "focus": "Transboundary high mountain ranges and glaciers",
+    "website": "https://whc.unesco.org/en/list/1490/",
+    "notes": "27.1% mass loss since 2000.",
+    "lat": 42.0,
+    "lon": 71.5
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Tajik National Park (Mountains of the Pamirs)",
+    "type": "World Heritage — Natural",
+    "region": "Pamir",
+    "country": "Tajikistan",
+    "focus": "Fedchenko Glacier — one of the longest non-polar glaciers",
+    "website": "https://whc.unesco.org/en/list/1252/",
+    "notes": "",
+    "lat": 38.75,
+    "lon": 72.5
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Uvs Nuur Basin",
+    "type": "World Heritage — Natural",
+    "region": "Altai-Sayan",
+    "country": "Mongolia & Russia",
+    "focus": "Turgen and Tsagaan Shuvuut glaciated ranges",
+    "website": "https://whc.unesco.org/en/list/769/",
+    "notes": "37% mass loss since 2000.",
+    "lat": 50.3333,
+    "lon": 92.8333
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Golden Mountains of Altai",
+    "type": "World Heritage — Natural",
+    "region": "Altai",
+    "country": "Russia",
+    "focus": "Katun and Belukha glaciers",
+    "website": "https://whc.unesco.org/en/list/768/",
+    "notes": "239 glaciers; 19.8% mass loss.",
+    "lat": 49.8,
+    "lon": 86.5
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Volcanoes of Kamchatka",
+    "type": "World Heritage — Natural",
+    "region": "Kamchatka",
+    "country": "Russia",
+    "focus": "Glaciated active volcanoes; rare volcano-glacier interactions",
+    "website": "https://whc.unesco.org/en/list/765/",
+    "notes": "296 glaciers; 16.6% mass loss.",
+    "lat": 55.8333,
+    "lon": 160.0
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Natural System of Wrangel Island Reserve",
+    "type": "World Heritage — Natural",
+    "region": "Russian Arctic",
+    "country": "Russia",
+    "focus": "Arctic island with small mountain glaciers",
+    "website": "https://whc.unesco.org/en/list/1023/",
+    "notes": "",
+    "lat": 71.2333,
+    "lon": -179.0
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Virgin Komi Forests",
+    "type": "World Heritage — Natural",
+    "region": "Northern Urals",
+    "country": "Russia",
+    "focus": "Ural glaciers and tundra",
+    "website": "https://whc.unesco.org/en/list/719/",
+    "notes": "",
+    "lat": 62.5,
+    "lon": 57.5
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Laponian Area",
+    "type": "World Heritage — Mixed",
+    "region": "Scandinavia",
+    "country": "Sweden",
+    "focus": "Sarek and Sulitelma glaciers in Sápmi",
+    "website": "https://whc.unesco.org/en/list/774/",
+    "notes": "180 glaciers; 25.7% mass loss.",
+    "lat": 67.3667,
+    "lon": 17.5833
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "West Norwegian Fjords — Geirangerfjord & Nærøyfjord",
+    "type": "World Heritage — Natural",
+    "region": "Scandinavia",
+    "country": "Norway",
+    "focus": "Glacier-carved fjords; small mountain glaciers in catchment",
+    "website": "https://whc.unesco.org/en/list/1195/",
+    "notes": "33.2% mass loss since 2000.",
+    "lat": 62.1,
+    "lon": 7.1667
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "The Dolomites",
+    "type": "World Heritage — Natural",
+    "region": "European Alps",
+    "country": "Italy",
+    "focus": "Marmolada and small cirque glaciers",
+    "website": "https://whc.unesco.org/en/list/1237/",
+    "notes": "Very likely to disappear by 2050.",
+    "lat": 46.4167,
+    "lon": 11.85
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Mont-Perdu / Pyrénées-Mont Perdu",
+    "type": "World Heritage — Mixed",
+    "region": "Pyrenees",
+    "country": "France & Spain",
+    "focus": "Monte Perdido and Ossoue — southernmost European glaciers",
+    "website": "https://whc.unesco.org/en/list/773/",
+    "notes": "Very likely to disappear by 2050.",
+    "lat": 42.6833,
+    "lon": 0.0333
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Pirin National Park",
+    "type": "World Heritage — Natural",
+    "region": "Pirin — Balkan Mountains",
+    "country": "Bulgaria",
+    "focus": "Snezhnika — Europe's southernmost glacieret",
+    "website": "https://whc.unesco.org/en/list/225/",
+    "notes": "",
+    "lat": 41.7667,
+    "lon": 23.4333
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Durmitor National Park",
+    "type": "World Heritage — Natural",
+    "region": "Balkans",
+    "country": "Montenegro",
+    "focus": "Small cirque ice patches",
+    "website": "https://whc.unesco.org/en/list/100/",
+    "notes": "",
+    "lat": 43.15,
+    "lon": 19.05
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Plitvice Lakes National Park",
+    "type": "World Heritage — Natural",
+    "region": "Dinaric Alps",
+    "country": "Croatia",
+    "focus": "Relict glacier-shaped karst",
+    "website": "https://whc.unesco.org/en/list/98/",
+    "notes": "Glaciers essentially gone; retained for history.",
+    "lat": 44.8667,
+    "lon": 15.6167
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Waterton Glacier International Peace Park",
+    "type": "World Heritage — Natural",
+    "region": "Rockies",
+    "country": "Canada & USA",
+    "focus": "Transboundary Rocky Mountain parks; Glacier National Park MT + Waterton Lakes",
+    "website": "https://whc.unesco.org/en/list/354/",
+    "notes": "42 glaciers; 26.5% mass loss since 2000.",
+    "lat": 48.9,
+    "lon": -113.9
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Yellowstone National Park",
+    "type": "World Heritage — Natural",
+    "region": "Rockies",
+    "country": "USA",
+    "focus": "Glacierized patches likely to disappear by 2050",
+    "website": "https://whc.unesco.org/en/list/28/",
+    "notes": "Very likely to disappear by 2050.",
+    "lat": 44.428,
+    "lon": -110.5885
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Yosemite National Park",
+    "type": "World Heritage — Natural",
+    "region": "Sierra Nevada",
+    "country": "USA",
+    "focus": "Lyell and Maclure — California's largest remaining glaciers",
+    "website": "https://whc.unesco.org/en/list/308/",
+    "notes": "Very likely to disappear by 2050.",
+    "lat": 37.8651,
+    "lon": -119.5383
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Olympic National Park",
+    "type": "World Heritage — Natural",
+    "region": "Olympic Mountains",
+    "country": "USA",
+    "focus": "Blue Glacier and others; 46% surface area loss 1980–2015",
+    "website": "https://whc.unesco.org/en/list/151/",
+    "notes": "39 glaciers; 26.5% mass loss.",
+    "lat": 47.8021,
+    "lon": -123.6044
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Mount Kenya National Park / Natural Forest",
+    "type": "World Heritage — Natural",
+    "region": "Tropical East Africa",
+    "country": "Kenya",
+    "focus": "Tyndall and Lewis — last glaciers on Mount Kenya",
+    "website": "https://whc.unesco.org/en/list/800/",
+    "notes": "Will very likely be gone by 2050.",
+    "lat": -0.15,
+    "lon": 37.3
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Kilimanjaro National Park",
+    "type": "World Heritage — Natural",
+    "region": "Kilimanjaro",
+    "country": "Tanzania",
+    "focus": "Africa's largest remaining tropical glaciers",
+    "website": "https://whc.unesco.org/en/list/403/",
+    "notes": "Will very likely be gone by 2050.",
+    "lat": -3.0667,
+    "lon": 37.35
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Rwenzori Mountains National Park",
+    "type": "World Heritage — Natural",
+    "region": "Rwenzori",
+    "country": "Uganda",
+    "focus": "Africa's last remaining equatorial glaciers on Stanley, Speke, Baker",
+    "website": "https://whc.unesco.org/en/list/684/",
+    "notes": "Will very likely be gone by 2050.",
+    "lat": 0.3833,
+    "lon": 29.8833
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Virunga National Park",
+    "type": "World Heritage — Natural",
+    "region": "Virunga / Rwenzori foothills",
+    "country": "DR Congo",
+    "focus": "Glaciated peaks of the Rwenzori on the Congolese side",
+    "website": "https://whc.unesco.org/en/list/63/",
+    "notes": "Will very likely be gone by 2050.",
+    "lat": -0.5,
+    "lon": 29.5
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Los Alerces National Park",
+    "type": "World Heritage — Natural",
+    "region": "Southern Andes / Patagonia",
+    "country": "Argentina",
+    "focus": "Andes glaciers; Torrecillas Glacier",
+    "website": "https://whc.unesco.org/en/list/1526/",
+    "notes": "45.6% mass loss — #2 fastest-retreating on WHS list.",
+    "lat": -42.8,
+    "lon": -71.9
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Sangay National Park",
+    "type": "World Heritage — Natural",
+    "region": "Tropical Andes",
+    "country": "Ecuador",
+    "focus": "Glaciated active volcanoes — Sangay, El Altar, Tungurahua",
+    "website": "https://whc.unesco.org/en/list/260/",
+    "notes": "",
+    "lat": -2.0,
+    "lon": -78.3333
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Los Katíos National Park",
+    "type": "World Heritage — Natural",
+    "region": "Tropical Andes",
+    "country": "Colombia",
+    "focus": "Glacier-influenced Andean forests",
+    "website": "https://whc.unesco.org/en/list/711/",
+    "notes": "",
+    "lat": 7.85,
+    "lon": -77.1333
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Río Abiseo National Park",
+    "type": "World Heritage — Mixed",
+    "region": "Tropical Andes",
+    "country": "Peru",
+    "focus": "Glacier-fed upper Andean ecosystems",
+    "website": "https://whc.unesco.org/en/list/548/",
+    "notes": "",
+    "lat": -7.6167,
+    "lon": -77.25
+  },
+  {
+    "category": "UNESCO World Heritage",
+    "name": "Machu Picchu Historic Sanctuary",
+    "type": "World Heritage — Mixed",
+    "region": "Tropical Andes — Vilcanota",
+    "country": "Peru",
+    "focus": "Glacier-fed catchment incl. nearby Salcantay and Humantay glaciers",
+    "website": "https://whc.unesco.org/en/list/274/",
+    "notes": "",
+    "lat": -13.1631,
+    "lon": -72.545
+  },
+  {
+    "category": "UNESCO Biosphere Reserve",
+    "name": "Huascarán Biosphere Reserve",
+    "type": "Biosphere Reserve",
+    "region": "Tropical Andes — Cordillera Blanca",
+    "country": "Peru",
+    "focus": "Overlaps Huascarán NP WHS; Andean glaciers and páramo",
+    "website": "https://en.unesco.org/biosphere/lac/huascaran",
+    "notes": "Dual designation with WHS.",
+    "lat": -9.1167,
+    "lon": -77.6667
+  },
+  {
+    "category": "UNESCO Biosphere Reserve",
+    "name": "Manu Biosphere Reserve",
+    "type": "Biosphere Reserve",
+    "region": "Tropical Andes / Amazon",
+    "country": "Peru",
+    "focus": "Eastern Andean glaciers feeding Amazon headwaters",
+    "website": "https://en.unesco.org/biosphere/lac/manu",
+    "notes": "",
+    "lat": -12.0667,
+    "lon": -71.5833
+  },
+  {
+    "category": "UNESCO Biosphere Reserve",
+    "name": "El Cañón del Río Blanco / Pico de Orizaba surroundings",
+    "type": "Biosphere Reserve",
+    "region": "Trans-Mexican Volcanic Belt",
+    "country": "Mexico",
+    "focus": "Jamapa and Citlaltépetl glaciers (Pico de Orizaba) — Mexico's last glaciers",
+    "website": "https://en.unesco.org/biosphere/lac",
+    "notes": "Verify current Biosphere designation for Pico de Orizaba.",
+    "lat": 19.03,
+    "lon": -97.27
+  },
+  {
+    "category": "UNESCO Biosphere Reserve",
+    "name": "Entlebuch Biosphere Reserve",
+    "type": "Biosphere Reserve",
+    "region": "European Alps",
+    "country": "Switzerland",
+    "focus": "Pre-alpine glacier-fed landscapes",
+    "website": "https://en.unesco.org/biosphere/eu-na/entlebuch",
+    "notes": "",
+    "lat": 46.9833,
+    "lon": 8.05
+  },
+  {
+    "category": "UNESCO Biosphere Reserve",
+    "name": "Ohrid-Prespa Transboundary Biosphere Reserve",
+    "type": "Biosphere Reserve",
+    "region": "Balkan Mountains",
+    "country": "Albania & North Macedonia",
+    "focus": "Mountain ecosystem including small ice patches",
+    "website": "https://en.unesco.org/biosphere/eu-na/ohrid-prespa",
+    "notes": "",
+    "lat": 40.9833,
+    "lon": 20.7167
+  },
+  {
+    "category": "UNESCO Biosphere Reserve",
+    "name": "Nanda Devi Biosphere Reserve",
+    "type": "Biosphere Reserve",
+    "region": "Western Himalaya",
+    "country": "India",
+    "focus": "Overlaps Nanda Devi WHS; multiple glaciers",
+    "website": "https://en.unesco.org/biosphere/aspac/nanda-devi",
+    "notes": "",
+    "lat": 30.5,
+    "lon": 79.9
+  },
+  {
+    "category": "UNESCO Biosphere Reserve",
+    "name": "Mt Kenya Biosphere Reserve",
+    "type": "Biosphere Reserve",
+    "region": "Tropical East Africa",
+    "country": "Kenya",
+    "focus": "Overlaps Mt Kenya WHS; Lewis & Tyndall glaciers",
+    "website": "https://en.unesco.org/biosphere/africa/mount-kenya",
+    "notes": "",
+    "lat": -0.15,
+    "lon": 37.3
+  },
+  {
+    "category": "UNESCO Biosphere Reserve",
+    "name": "Mt Kilimanjaro Biosphere Reserve",
+    "type": "Biosphere Reserve",
+    "region": "Kilimanjaro",
+    "country": "Tanzania",
+    "focus": "Overlaps Kilimanjaro WHS; last African equatorial glaciers",
+    "website": "https://en.unesco.org/biosphere/africa/mount-kilimanjaro",
+    "notes": "",
+    "lat": -3.0667,
+    "lon": 37.35
+  },
+  {
+    "category": "UNESCO Biosphere Reserve",
+    "name": "Rwenzori Mountains Biosphere Reserve",
+    "type": "Biosphere Reserve",
+    "region": "Rwenzori",
+    "country": "Uganda",
+    "focus": "Overlaps Rwenzori WHS; tropical glaciers",
+    "website": "https://en.unesco.org/biosphere/africa/rwenzori-mountains",
+    "notes": "",
+    "lat": 0.3833,
+    "lon": 29.8833
+  },
+  {
+    "category": "UNESCO Biosphere Reserve",
+    "name": "Great Altai Transboundary Biosphere Reserve",
+    "type": "Biosphere Reserve",
+    "region": "Altai",
+    "country": "Russia & Kazakhstan",
+    "focus": "Altai glaciers",
+    "website": "https://en.unesco.org/biosphere/eu-na/great-altai",
+    "notes": "",
+    "lat": 49.8,
+    "lon": 86.5
+  },
+  {
+    "category": "UNESCO Biosphere Reserve",
+    "name": "Issyk-Kul Biosphere Reserve",
+    "type": "Biosphere Reserve",
+    "region": "Tien Shan",
+    "country": "Kyrgyzstan",
+    "focus": "Tien Shan glaciers around the lake",
+    "website": "https://en.unesco.org/biosphere/aspac/issyk-kul",
+    "notes": "",
+    "lat": 42.4,
+    "lon": 77.2
+  },
+  {
+    "category": "UNESCO Biosphere Reserve",
+    "name": "Yellowstone Biosphere Reserve",
+    "type": "Biosphere Reserve",
+    "region": "Rockies",
+    "country": "USA",
+    "focus": "Overlaps Yellowstone WHS; small glaciated patches",
+    "website": "https://en.unesco.org/biosphere/eu-na/yellowstone",
+    "notes": "",
+    "lat": 44.428,
+    "lon": -110.5885
+  },
+  {
+    "category": "UNESCO Biosphere Reserve",
+    "name": "Olympic Biosphere Reserve",
+    "type": "Biosphere Reserve",
+    "region": "Olympic Mountains",
+    "country": "USA",
+    "focus": "Overlaps Olympic NP WHS",
+    "website": "https://en.unesco.org/biosphere/eu-na/olympic",
+    "notes": "",
+    "lat": 47.8021,
+    "lon": -123.6044
+  },
+  {
+    "category": "UNESCO Biosphere Reserve",
+    "name": "Glacier Biosphere Reserve (Montana)",
+    "type": "Biosphere Reserve",
+    "region": "Rockies",
+    "country": "USA",
+    "focus": "Overlaps Waterton-Glacier WHS",
+    "website": "https://en.unesco.org/biosphere/eu-na",
+    "notes": "Verify current designation status.",
+    "lat": 48.9,
+    "lon": -113.9
+  },
+  {
+    "category": "Artist/Art",
+    "name": "Thijs Biersteker — Memories of the Melted",
+    "type": "Interactive installation",
+    "region": "European Alps / Global",
+    "country": "Netherlands",
+    "focus": "Generative artwork turning glacier data into a melting ice-slab projection — collab with Heïdi Sevestre, Matthias Huss",
+    "website": "https://thijsbiersteker.com/memories-of-the-melted-ice",
+    "notes": "Commissioned by Villars Institute; Lumen Prize finalist 2025.",
+    "lat": 52.3676,
+    "lon": 4.9041
+  },
+  {
+    "category": "Artist/Art",
+    "name": "Ghost In The Loop (Aurélien Buiron) — Le Chant de la Glace",
+    "type": "Sound art / music",
+    "region": "European Alps",
+    "country": "France",
+    "focus": "Album recorded live inside the Zinal Glacier using hydrophones and modular synths",
+    "website": "https://ghostintheloop.bandcamp.com",
+    "notes": "Multiple glacier recordings since 2023.",
+    "lat": 46.1333,
+    "lon": 7.6333
+  },
+  {
+    "category": "Artist/Art",
+    "name": "Barthélemy Antoine-Lœff — Tipping Point / Iceberg Breeder",
+    "type": "Sculpture / relational art",
+    "region": "Global — Alps, Arctic",
+    "country": "Paris, France",
+    "focus": "Artificial glacier under a glass bell, relayed house-to-house; homage to Okjökull",
+    "website": "https://ibal.tv",
+    "notes": "Inspired by Ladakh ice stupas (Sonam Wangchuk).",
+    "lat": 48.8566,
+    "lon": 2.3522
+  },
+  {
+    "category": "Artist/Art",
+    "name": "Ximena Aguilar Vega — A Pinch of Light",
+    "type": "Photography / poetry",
+    "region": "Polar & mountain",
+    "country": "Stirling, UK (Mexican)",
+    "focus": "Glaciologist-photographer-poet; exhibition fusing science, photography and poetry",
+    "website": "https://www.ximena-a-vega.com",
+    "notes": "Mexican; Shackleton Medal finalist 2024.",
+    "lat": 56.1165,
+    "lon": -3.9369
+  },
+  {
+    "category": "Artist/Art",
+    "name": "Ugo Nanni — The Sounds of Kongsvegen Glacier",
+    "type": "Sound art / science",
+    "region": "Svalbard",
+    "country": "Oslo, Norway (Italian)",
+    "focus": "Seismometer recordings of Kongsvegen glacier in Svalbard, post-processed into audible tracks",
+    "website": "https://soundcloud.com/ugonanni/sets/the-sounds-of-kongsvegen-glacier",
+    "notes": "University of Oslo researcher.",
+    "lat": 78.8,
+    "lon": 12.95
+  },
+  {
+    "category": "Artist/Art",
+    "name": "Glacier Lamentation (Norwegian Academy of Music)",
+    "type": "Sound art research",
+    "region": "Global",
+    "country": "Oslo, Norway",
+    "focus": "Interdisciplinary artistic research on expressing climate change through glacier sound art",
+    "website": "https://nmh.no/en/research/projects/glacier-lamentation",
+    "notes": "Led by Torben Snekkestad, Morten Qvenild, Anja Lauvdal.",
+    "lat": 59.9272,
+    "lon": 10.7155
+  },
+  {
+    "category": "Artist/Art",
+    "name": "Olafur Eliasson — The Glacier Melt Series 1999/2019",
+    "type": "Photography",
+    "region": "Iceland",
+    "country": "Denmark / Iceland",
+    "focus": "30 aerial photo pairs of Icelandic glaciers taken 20 years apart",
+    "website": "https://olafureliasson.net/artwork/the-glacier-melt-series-1999-2019-2019/",
+    "notes": "Widely exhibited internationally.",
+    "lat": 64.1355,
+    "lon": -21.8954
+  },
+  {
+    "category": "Artist/Art",
+    "name": "Terminus Glacier Memorial (Olympic National Park)",
+    "type": "Multi-artist collective",
+    "region": "Olympic Mountains",
+    "country": "Washington, USA",
+    "focus": "Artist-in-residence project with 40+ artists memorialising each of Olympic's glaciers",
+    "website": "https://go.nps.gov/terminus",
+    "notes": "Partners: Washington's National Park Fund, Discover Your Northwest.",
+    "lat": 47.8021,
+    "lon": -123.6044
+  },
+  {
+    "category": "Artist/Art",
+    "name": "Pepe Molina Cruz — Evanescet: The Last Glaciers",
+    "type": "Mythic multi-media",
+    "region": "Global",
+    "country": "International",
+    "focus": "Mythological audio-visual project exploring glaciers as living beings; album & artbook",
+    "website": "https://www.un-glaciers.org/en/art",
+    "notes": "Listed on UN IYGP 2025 art page.",
+    "lat": 40.4168,
+    "lon": -3.7038
+  },
+  {
+    "category": "Artist/Art",
+    "name": "Sonam Wangchuk — Ice Stupas",
+    "type": "Engineering-art",
+    "region": "Ladakh / Western Himalaya",
+    "country": "India",
+    "focus": "Artificial conical glaciers storing winter water for spring irrigation",
+    "website": "https://icestupa.org",
+    "notes": "Revived ancestral knowledge; inspires Barthélemy Antoine-Lœff.",
+    "lat": 34.1526,
+    "lon": 77.5771
+  },
+  {
+    "category": "Artist/Art",
+    "name": "UN IYGP 2025 — Art for Glaciers Preservation hub",
+    "type": "Curated programme",
+    "region": "Global",
+    "country": "Online / multi-site",
+    "focus": "UN-curated directory of artists responding to glacier loss",
+    "website": "https://www.un-glaciers.org/en/art",
+    "notes": "Use to find more artists to add.",
+    "lat": 48.8497,
+    "lon": 2.3064
+  },
+  {
+    "category": "Film/Documentary",
+    "name": "Time and Water (2026)",
+    "type": "Feature documentary",
+    "region": "Iceland",
+    "country": "USA / Iceland",
+    "focus": "Sara Dosa (dir.) — based on Andri Snær Magnason's book, links climate, glaciers and family memory",
+    "website": "https://www.imdb.com/title/tt39163015/",
+    "notes": "Verify IMDb URL; Sundance 2026 screening.",
+    "lat": 64.1355,
+    "lon": -21.8954
+  },
+  {
+    "category": "Film/Documentary",
+    "name": "Under Antarctica (France Télévisions, 2026–2027)",
+    "type": "Feature documentary",
+    "region": "Antarctica (scope note)",
+    "country": "France",
+    "focus": "90-minute prime-time documentary on Heïdi Sevestre & Matthieu Tordeur's 80-day traverse",
+    "website": "",
+    "notes": "In production with Gédeón Programmes. Listed for transparency.",
+    "lat": -75.0,
+    "lon": 0.0
+  },
+  {
+    "category": "Film/Documentary",
+    "name": "Not Ok (2024)",
+    "type": "Short documentary",
+    "region": "Iceland",
+    "country": "France / Iceland",
+    "focus": "Pierre Dugowson — features Heïdi Sevestre; elegy for Okjökull",
+    "website": "https://www.un-glaciers.org/en/documentaries",
+    "notes": "Won 1st prize International Film Festival on Glaciers, Geneva 2024.",
+    "lat": 64.6,
+    "lon": -20.8
+  },
+  {
+    "category": "Film/Documentary",
+    "name": "The Last Glaciers (2022, ongoing distribution)",
+    "type": "IMAX documentary",
+    "region": "Global — mountain",
+    "country": "Canada / Australia",
+    "focus": "Craig Leeson & Malcolm Wood — global call to action on mountain glaciers",
+    "website": "https://thelastglaciers.com",
+    "notes": "UNEP Mountain Advocate endorsed.",
+    "lat": 46.2266,
+    "lon": 6.1407
+  },
+  {
+    "category": "Film/Documentary",
+    "name": "The Ultimate Ice Mission (2025)",
+    "type": "Science documentary",
+    "region": "Global",
+    "country": "France / USA",
+    "focus": "Florent Muller dir.; led by Eric Rignot (NASA/JPL), featuring Al Gore",
+    "website": "https://www.zed.fr",
+    "notes": "Produced by AUXYMA for France Télévisions; ZED distribution.",
+    "lat": 48.8566,
+    "lon": 2.3522
+  },
+  {
+    "category": "Film/Documentary",
+    "name": "Arctic Ascent with Alex Honnold (2024)",
+    "type": "TV series (3-part)",
+    "region": "Greenland (scope note)",
+    "country": "USA",
+    "focus": "National Geographic / Disney+; features Heïdi Sevestre",
+    "website": "https://www.nationalgeographic.com/tv/shows/arctic-ascent-with-alex-honnold",
+    "notes": "Scope note: Greenland — listed for transparency.",
+    "lat": 78.0,
+    "lon": -40.0
+  },
+  {
+    "category": "Film/Documentary",
+    "name": "Chasing Ice (2012)",
+    "type": "Feature documentary",
+    "region": "Global — mountain & polar",
+    "country": "USA",
+    "focus": "Jeff Orlowski dir.; follows James Balog's Extreme Ice Survey",
+    "website": "https://chasingice.com",
+    "notes": "Classic reference film.",
+    "lat": 40.015,
+    "lon": -105.2705
+  },
+  {
+    "category": "Film/Documentary",
+    "name": "International Film Festival on Glaciers (Geneva)",
+    "type": "Festival",
+    "region": "Global",
+    "country": "Geneva, Switzerland",
+    "focus": "Annual film festival dedicated to glacier documentaries",
+    "website": "",
+    "notes": "Verify current URL & name.",
+    "lat": 46.2266,
+    "lon": 6.1407
+  },
+  {
+    "category": "Film/Documentary",
+    "name": "Heïdi's Ice (TV5 Monde / LCP)",
+    "type": "TV documentary series",
+    "region": "Global — mountain & polar",
+    "country": "France",
+    "focus": "Documentary series featuring Heïdi Sevestre",
+    "website": "",
+    "notes": "Verify current broadcaster & URL.",
+    "lat": 48.8566,
+    "lon": 2.3522
+  }
+];
+
+const CAT_COLORS = {
+  "Organisation":            "#2C3440",
+  "UNESCO World Heritage":   "#C9A84C",
+  "UNESCO Biosphere Reserve":"#6B8F71",
+  "Artist/Art":              "#7B5C8A",
+  "Film/Documentary":        "#8A4040",
+};
+
+// ── MAP SETUP ──────────────────────────────────────────────────────────────
+const map = L.map('map', {
+  center: [20, 10], zoom: 2,
+  zoomControl: true,
+});
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com">CARTO</a>',
+  subdomains: 'abcd', maxZoom: 19,
+}).addTo(map);
+
+function makeIcon(cat) {
+  const color = CAT_COLORS[cat] || '#888';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+    <circle cx="8" cy="8" r="6" fill="${color}" stroke="white" stroke-width="2"/>
+  </svg>`;
+  return L.divIcon({
+    html: svg,
+    className: '',
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
+    popupAnchor: [0, -10],
+  });
+}
+
+let allMarkers = [];
+
+DATA.forEach(d => {
+  const marker = L.marker([d.lat, d.lon], { icon: makeIcon(d.category) });
+  const link = d.website
+    ? `<a class="popup-link" href="${d.website}" target="_blank" rel="noopener">Visit website →</a>`
+    : '';
+  marker.bindPopup(`
+    <div class="popup-name">${d.name}</div>
+    <div class="popup-type">${d.category} · ${d.type}</div>
+    <div class="popup-focus">${d.focus}</div>
+    ${link}
+  `);
+  marker._entryData = d;
+  allMarkers.push(marker);
+  marker.addTo(map);
+});
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+let activeCategory = 'All';
+let activeRegion = 'All';
+let searchQuery = '';
+
+// ── REGIONS ───────────────────────────────────────────────────────────────
+const allRegions = ['All', ...new Set(DATA.map(d => d.region.split('/')[0].trim()).sort())];
+const regionChips = document.getElementById('region-chips');
+allRegions.slice(0, 12).forEach(r => {
+  const btn = document.createElement('button');
+  btn.className = 'chip' + (r === 'All' ? ' active' : '');
+  btn.textContent = r === 'All' ? 'All regions' : r;
+  btn.dataset.region = r;
+  btn.addEventListener('click', () => {
+    activeRegion = r;
+    document.querySelectorAll('#region-chips .chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+  });
+  regionChips.appendChild(btn);
+});
+
+// ── CATEGORY TABS ─────────────────────────────────────────────────────────
+document.querySelectorAll('.cat-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    activeCategory = tab.dataset.cat;
+    document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    render();
+  });
+});
+
+// ── SEARCH ────────────────────────────────────────────────────────────────
+document.getElementById('search-input').addEventListener('input', e => {
+  searchQuery = e.target.value.toLowerCase();
+  render();
+});
+
+// ── RENDER ────────────────────────────────────────────────────────────────
+const grid = document.getElementById('cards-grid');
+
+function filtered() {
+  return DATA.filter(d => {
+    if (activeCategory !== 'All' && d.category !== activeCategory) return false;
+    if (activeRegion !== 'All' && !d.region.includes(activeRegion)) return false;
+    if (searchQuery && !d.name.toLowerCase().includes(searchQuery)
+        && !d.focus.toLowerCase().includes(searchQuery)
+        && !d.country.toLowerCase().includes(searchQuery)
+        && !d.region.toLowerCase().includes(searchQuery)
+        && !d.type.toLowerCase().includes(searchQuery)) return false;
+    return true;
+  });
+}
+
+function arrowSVG() {
+  return `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+    <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+  </svg>`;
+}
+
+function render() {
+  const items = filtered();
+  document.getElementById('results-count').textContent = items.length;
+
+  // update map
+  allMarkers.forEach(m => {
+    const d = m._entryData;
+    const vis = items.includes(d);
+    if (vis && !map.hasLayer(m)) m.addTo(map);
+    if (!vis && map.hasLayer(m)) map.removeLayer(m);
+  });
+
+  // render cards
+  if (items.length === 0) {
+    grid.innerHTML = '<div class="no-results">No entries match your current filters.</div>';
+    return;
+  }
+
+  grid.innerHTML = items.map(d => {
+    const color = CAT_COLORS[d.category] || '#888';
+    const linkHtml = d.website
+      ? `<a class="card-link" href="${d.website}" target="_blank" rel="noopener">Visit ${arrowSVG()}</a>`
+      : '<span></span>';
+    const notesHtml = d.notes
+      ? `<div style="font-size:11px;color:var(--muted);margin-top:6px;font-style:italic">${d.notes}</div>`
+      : '';
+    return `<div class="card">
+      <div class="card-header">
+        <div class="card-name">${d.name}</div>
+        <span class="card-cat-dot" style="background:${color}"></span>
+      </div>
+      <div class="card-type">${d.type}</div>
+      <div class="card-focus">${d.focus}${notesHtml}</div>
+      <div class="card-footer">
+        <span class="card-region">${d.region}</span>
+        ${linkHtml}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+render();
+
+// ── FORM ──────────────────────────────────────────────────────────────────
+document.getElementById('submit-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  document.getElementById('form-success').style.display = 'block';
+  this.reset();
+  setTimeout(() => {
+    document.getElementById('form-success').style.display = 'none';
+  }, 6000);
+});
+</script>
+</body>
+</html>
